@@ -1,263 +1,622 @@
 <!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8">
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Mesa de RPG</title>
+<meta name="theme-color" content="#111318">
+<title>Tabletop — Mesa de RPG</title>
 <style>
-:root{--bg:#f4f1ea;--fg:#221f1a;--card:#fff;--line:#d8d2c4;--ac:#7a3e9d;color-scheme:light dark}
-@media(prefers-color-scheme:dark){:root{--bg:#17151b;--fg:#ece8f2;--card:#221f2a;--line:#3a3545;--ac:#b98ae0}}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
-header,.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;max-width:1200px;margin:0 auto;box-sizing:border-box}
-h1{font-size:18px;margin:0;flex:1}
-.role{padding:3px 10px;border-radius:99px;background:var(--ac);color:#fff;font-size:13px}
-button,.btn,select{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:14px;cursor:pointer}
-button.p{background:var(--ac);color:#fff;border:0}
-input[type=text]{padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font-size:16px}
-#lobby{max-width:420px;margin:30px auto;padding:0 16px;display:flex;flex-direction:column;gap:10px}
-#app{display:none}
-#wrap{max-width:1200px;margin:0 auto;overflow:auto;max-height:78vh;border-radius:8px}
-#board{position:relative;container-type:inline-size;width:100%;aspect-ratio:16/10;background:#2b2833 center/contain no-repeat;overflow:hidden}
-#board.grid::after{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(#fff4 1px,transparent 1px),linear-gradient(90deg,#fff4 1px,transparent 1px);background-size:5cqw 5cqw}
-.tok{position:absolute;transform:translate(-50%,-50%);width:calc(var(--s)*1%);aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:calc(var(--s)*.55cqw);border:2px solid #fff;box-shadow:0 2px 6px #0008;user-select:none;touch-action:none}
-.tok.can{cursor:grab}
-.tok.img{background:none;border:0;box-shadow:none;border-radius:0;aspect-ratio:auto;filter:drop-shadow(0 3px 4px #000a)}
-.tok img{width:100%;height:auto;display:block;pointer-events:none;-webkit-user-drag:none}
-.tok .n{position:absolute;top:100%;margin-top:2px;font-size:11px;white-space:nowrap;background:#000b;color:#fff;padding:0 5px;border-radius:4px}
-#ed{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:12px;display:none;z-index:5}
-#ed.on{display:block}
-#ed .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;max-width:1200px;margin:0 auto 8px}
-.mini{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background-size:contain;background-repeat:no-repeat;background-position:center;flex:none}
-#libl{display:flex;flex-wrap:wrap;gap:8px;width:100%}
-.chip{display:flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--card);border-radius:99px;padding:3px 6px}
-.chip button{padding:4px 8px;border:0;background:none}
-#chat{max-width:1200px;margin:8px auto;padding:0 12px;box-sizing:border-box}
-#log{height:160px;overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--card);padding:8px;font-size:14px;margin-bottom:8px}
-#log .roll{color:var(--ac)}
-.crow{display:flex;gap:8px}.crow input{flex:1;min-width:0}
-#toast{position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#000c;color:#fff;padding:8px 14px;border-radius:8px;display:none;z-index:9}
-</style></head><body>
-<header><h1>🎲 Mesa de RPG</h1><span class="role" id="role"></span><button id="inv" style="display:none">🔗 Convidar</button></header>
-<div id="lobby">
-  <input type="text" id="name" placeholder="Seu nome" maxlength="20">
-  <input type="text" id="code" placeholder="Código da mesa (ex.: K7P2X)" maxlength="8">
-  <button class="p" id="join">Entrar na mesa</button>
-  <button id="create">Criar nova mesa (serei o Mestre)</button>
-  <div id="msg" style="font-size:13px;opacity:.8"></div>
-</div>
-<div id="app">
-<div class="bar" id="gm" style="display:none">
-  <label class="btn">🗺️ Trocar mapa<input id="file" type="file" accept="image/*" hidden></label>
-  <button id="nomap">Remover mapa</button>
-  <label class="btn"><input id="grid" type="checkbox"> Grade</label>
-  <label class="btn">Tamanho <input id="scale" type="range" min="100" max="400" step="10" value="100"></label>
-  <select id="ratio"><option value="auto">Proporção: da imagem</option><option value="16/10">16:10</option><option value="4/3">4:3</option><option value="1/1">Quadrado</option><option value="9/16">Vertical</option><option value="21/9">Panorâmico</option></select>
-  <button id="addnpc" class="p">+ NPC</button><button id="liblb">📚 Biblioteca</button>
-</div>
-<div class="bar" id="libp" style="display:none"><div id="libl"></div><button id="newlib" class="p">+ Novo token na biblioteca</button></div>
-<div class="bar" id="pl" style="display:none"><button id="mine" class="p">Meu token</button><span style="font-size:13px;opacity:.7">Arraste seu token. Toque nele para editar.</span></div>
-<div id="wrap"><div id="board"></div></div>
-<div id="chat"><div id="log"></div><div class="crow"><input type="text" id="cin" placeholder="Mensagem ou /r 1d20+3" maxlength="200"><button id="csend" class="p">Enviar</button><button id="cclr" style="display:none">Limpar</button></div></div>
-<div id="ed">
-  <div class="row"><span class="mini" id="f-prev"></span><label class="btn">📷 Foto (PNG sem fundo)<input id="f-file" type="file" accept="image/*" hidden></label><button id="f-noimg">Sem foto</button><input type="text" id="f-name" placeholder="Nome" maxlength="20"><input type="text" id="f-emoji" placeholder="🙂" maxlength="4" style="width:64px"><input type="color" id="f-color"><label>Tamanho <input type="range" id="f-size" min="3" max="30" value="8"></label></div>
-  <div class="row"><button class="p" id="e-save">Salvar</button><button id="e-lib">Salvar na biblioteca</button><button id="e-del">Excluir</button><button id="e-x">Fechar</button></div>
-</div>
-</div>
+:root{
+  color-scheme:dark;--bg:#111318;--panel:#191c23;--panel2:#20242d;--panel3:#272c36;
+  --line:#303642;--line2:#3b4351;--text:#edf0f5;--muted:#929baa;--accent:#9b7cff;
+  --accent2:#7456df;--green:#5ac69b;--red:#ed7181;--board:#12151b;
+  --shadow:0 14px 38px #0006;--radius:12px;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
+button,input,select{font:inherit}
+button{color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.topbar{height:58px;border-bottom:1px solid var(--line);background:#15181e;display:flex;align-items:center;gap:14px;padding:0 18px;position:relative;z-index:5}
+.brand{display:flex;align-items:center;gap:10px;font-weight:750;letter-spacing:.01em;white-space:nowrap}
+.brandmark{width:30px;height:30px;border-radius:9px;background:linear-gradient(145deg,#b49aff,#7355df);display:grid;place-items:center;color:white;font-size:17px;box-shadow:0 4px 15px #8b6cff55}
+.top-divider{height:25px;width:1px;background:var(--line)}
+.room-name{display:flex;align-items:center;gap:8px;color:#dce0e9;font-weight:600}
+.room-name small{color:var(--muted);font-weight:450}
+.top-spacer{flex:1}
+.status{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px #5ac69b66}
+.role{border:1px solid #7157c9;background:#7258c51e;color:#c7baff;padding:5px 9px;border-radius:7px;font-size:12px;font-weight:650}
+.btn{border:1px solid var(--line2);background:var(--panel2);border-radius:8px;padding:7px 10px;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:34px;transition:background .15s,border-color .15s,transform .15s}
+.btn:hover{background:#2b303b;border-color:#555e70}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--accent2);border-color:var(--accent2);color:white}
+.btn.primary:hover{background:#8668ef}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{background:var(--panel3);color:var(--text)}
+.btn.danger{color:#ff9aa6}
+.btn.icon{width:34px;padding:0;font-size:16px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.workspace{height:calc(100% - 58px);display:grid;grid-template-columns:250px minmax(280px,1fr) 270px;min-height:0}
+.sidebar{background:var(--panel);min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.sidebar.left{border-right:1px solid var(--line)}
+.sidebar.right{border-left:1px solid var(--line)}
+.side-head{height:48px;padding:0 15px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#aeb5c2;font-weight:700;flex:none}
+.side-scroll{overflow:auto;padding:14px;min-height:0}
+.section{margin-bottom:22px}
+.section-title{display:flex;align-items:center;justify-content:space-between;color:#aeb5c2;font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin:0 0 10px}
+.tool-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.tool{background:var(--panel2);border:1px solid var(--line);border-radius:9px;min-height:65px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#cbd1dc;font-size:11px}
+.tool span:first-child{font-size:19px}
+.tool:hover,.tool.active{border-color:#8a70ed;background:#8062e51c;color:#d9ceff}
+.search{width:100%;border:1px solid var(--line);background:#13161c;border-radius:8px;padding:9px 10px;color:var(--text);outline:none}
+.search::placeholder{color:#707988}
+.list{display:flex;flex-direction:column;gap:5px}
+.list-item{width:100%;display:flex;align-items:center;gap:9px;padding:8px;border:1px solid transparent;border-radius:8px;background:transparent;text-align:left;color:#d4d9e2}
+.list-item:hover{background:var(--panel2)}
+.list-item.selected{background:#8d70f01c;border-color:#8064df88}
+.avatar{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:none;background:#353b49;border:1px solid #ffffff22;font-size:16px;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.item-copy{min-width:0;flex:1}
+.item-copy strong{display:block;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-copy small{display:block;color:var(--muted);font-size:10px}
+.item-more{color:#7e8796}
+.empty{color:var(--muted);font-size:12px;line-height:1.6;padding:12px 4px}
+.center{display:flex;flex-direction:column;min-width:0;min-height:0;background:#14171d}
+.canvas-toolbar{height:48px;display:flex;align-items:center;gap:7px;padding:0 13px;border-bottom:1px solid var(--line);background:#181b22;flex:none}
+.toolbar-group{display:flex;align-items:center;gap:4px}
+.toolbar-sep{width:1px;height:23px;background:var(--line);margin:0 3px}
+.canvas-label{font-size:12px;color:var(--muted);margin-right:4px}
+.canvas-area{position:relative;flex:1;min-height:0;overflow:hidden;background-color:#11141a;background-image:radial-gradient(#333946 1px,transparent 1px);background-size:20px 20px}
+.canvas-viewport{position:absolute;inset:0;overflow:hidden;touch-action:none}
+.board{position:absolute;left:50%;top:50%;width:min(88%,1100px);aspect-ratio:16/10;transform:translate(calc(-50% + var(--pan-x,0px)),calc(-50% + var(--pan-y,0px))) scale(var(--zoom,1));transform-origin:center;background:#252a34 center/contain no-repeat;border:1px solid #ffffff22;border-radius:4px;box-shadow:0 20px 70px #0008;overflow:hidden;transition:box-shadow .15s}
+.board.grid:after{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(#ffffff26 1px,transparent 1px),linear-gradient(90deg,#ffffff26 1px,transparent 1px);background-size:5% 5%}
+.board.no-map{background-color:#252a34;background-image:linear-gradient(135deg,#282e39,#1c2029)}
+.board.no-map:before{content:"Carregue um mapa para começar";position:absolute;inset:0;display:grid;place-items:center;color:#788292;font-size:14px;pointer-events:none}
+.token{position:absolute;left:50%;top:50%;width:var(--token-size,7%);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;border:2px solid #f5f3ff;box-shadow:0 3px 10px #000a;display:grid;place-items:center;font-size:clamp(12px,1.3vw,22px);font-weight:700;user-select:none;touch-action:none;cursor:default;z-index:2;transition:left .18s ease,top .18s ease,filter .15s,box-shadow .15s}
+.token.movable{cursor:grab}
+.token.movable:active{cursor:grabbing}
+.token.selected{outline:2px solid var(--accent);outline-offset:4px;box-shadow:0 0 0 6px #9b7cff33,0 5px 16px #000b;z-index:4}
+.token img{width:100%;height:100%;object-fit:contain;pointer-events:none;border-radius:inherit}
+.token.image-token{border:0;background:transparent!important;box-shadow:none}
+.token .token-name{position:absolute;top:calc(100% + 5px);left:50%;transform:translateX(-50%);white-space:nowrap;background:#101319eF;color:#fff;border:1px solid #ffffff22;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:550;pointer-events:none}
+.token.remote-moving{filter:brightness(1.3);transition:left .13s linear,top .13s linear}
+.canvas-hint{position:absolute;bottom:13px;left:14px;color:#7e8795;background:#171b22d9;border:1px solid #ffffff12;border-radius:7px;padding:6px 9px;font-size:11px;pointer-events:none}
+.zoom-indicator{position:absolute;right:14px;bottom:13px;background:#171b22e8;border:1px solid var(--line);border-radius:8px;padding:5px 8px;color:#c1c7d1;font-size:11px}
+.bottom-panel{height:205px;min-height:145px;max-height:42%;border-top:1px solid var(--line);background:#191c23;display:grid;grid-template-columns:minmax(260px,1fr) 280px;flex:none}
+.chat-panel{padding:11px 14px;display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line)}
+.panel-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#aeb5c2;font-weight:700;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.chat-log{overflow:auto;flex:1;font-size:12px;color:#d0d5df;display:flex;flex-direction:column;gap:5px}
+.chat-line{line-height:1.45;overflow-wrap:anywhere}
+.chat-line b{color:#c6b8ff;font-weight:650}
+.chat-line.roll{color:#d9caff}
+.chat-time{color:#6f7887;font-size:10px;margin-left:6px}
+.chat-compose{display:flex;gap:7px;margin-top:8px}
+.chat-compose input{min-width:0;flex:1;background:#11141a;border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--text)}
+.dice-panel{padding:11px 13px;display:flex;flex-direction:column;gap:9px}
+.dice-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.dice{border:1px solid var(--line);background:#222630;border-radius:7px;padding:8px 2px;color:#d6dbe4;font-size:12px}
+.dice:hover{border-color:var(--accent);color:#d8ccff}
+.dice-result{background:#11141a;border:1px solid var(--line);border-radius:8px;padding:8px;color:#c9baff;font-size:12px;min-height:35px}
+.right-section{padding:14px;border-bottom:1px solid var(--line)}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:13px}
+.field label{font-size:11px;color:#aeb5c2}
+.field input[type=text],.field select{width:100%;background:#12151b;border:1px solid var(--line);border-radius:7px;padding:8px 9px;color:var(--text)}
+.field input[type=color]{width:100%;height:34px;border:1px solid var(--line);border-radius:7px;background:#12151b;padding:3px}
+.field input[type=range]{width:100%;accent-color:var(--accent)}
+.field input[type=file]{width:100%;font-size:11px;color:var(--muted)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.checkline{display:flex;align-items:center;gap:8px;color:#c4cad5;font-size:12px;margin:9px 0}
+.checkline input{accent-color:var(--accent)}
+.property-actions{display:flex;gap:7px;flex-wrap:wrap}
+.property-actions .btn{flex:1}
+.prop-empty{padding:25px 15px;text-align:center;color:var(--muted);font-size:12px;line-height:1.7}
+.library-card{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:#20242d;border-radius:9px;padding:7px;margin-bottom:7px}
+.library-card .btn{padding:5px 7px;min-height:28px;font-size:11px}
+.lobby-wrap{height:100%;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 35%,#29213d 0,#151821 45%,#101217 100%);padding:20px}
+.lobby-card{width:min(430px,100%);background:#1a1e27;border:1px solid #3b4050;border-radius:18px;padding:28px;box-shadow:var(--shadow)}
+.lobby-logo{width:46px;height:46px;border-radius:14px;background:linear-gradient(145deg,#b49aff,#7355df);display:grid;place-items:center;font-size:25px;margin-bottom:17px}
+.lobby-card h1{font-size:23px;margin:0 0 7px}
+.lobby-card p{color:var(--muted);font-size:13px;margin:0 0 22px}
+.lobby-card input{width:100%;padding:11px 12px;background:#11141a;border:1px solid var(--line2);border-radius:9px;color:var(--text);margin-bottom:9px}
+.lobby-actions{display:flex;flex-direction:column;gap:8px;margin-top:5px}
+.lobby-actions .btn{width:100%;padding:10px}
+.lobby-note{font-size:11px;color:#828b9a;margin-top:14px;line-height:1.5}
+#toast{position:fixed;z-index:30;left:50%;top:70px;transform:translateX(-50%);background:#292e39;border:1px solid #4b5362;color:white;padding:9px 14px;border-radius:9px;box-shadow:var(--shadow);display:none;max-width:min(90vw,560px);font-size:12px}
+.hidden{display:none!important}
+.mobile-tabs{display:none}
+@media(max-width:1050px){.workspace{grid-template-columns:215px minmax(260px,1fr) 235px}.bottom-panel{grid-template-columns:minmax(220px,1fr) 230px}}
+@media(max-width:800px){
+ body{overflow:auto}.topbar{height:54px;padding:0 10px}.workspace{height:calc(100% - 54px);grid-template-columns:1fr;grid-template-rows:minmax(360px,1fr) auto;overflow:auto}
+ .sidebar.left,.sidebar.right{display:none}.center{min-height:600px}.canvas-area{min-height:300px}.bottom-panel{height:230px;grid-template-columns:1fr}.dice-panel{display:none}
+ .top-divider,.room-name small,.status{display:none}.mobile-tabs{display:flex;gap:5px;margin-left:auto}
+ .canvas-toolbar{overflow-x:auto}.canvas-toolbar .canvas-label{display:none}
+}
+</style>
+</head>
+<body>
 <div id="toast"></div>
+
+<section id="lobby" class="lobby-wrap">
+  <div class="lobby-card">
+    <div class="lobby-logo">♟</div>
+    <h1>Tabletop</h1>
+    <p>Seu espaço de jogo. Crie uma mesa ou entre usando o código do mestre.</p>
+    <input id="name" type="text" placeholder="Como quer ser chamado?" maxlength="20" autocomplete="nickname">
+    <input id="code" type="text" placeholder="Código da mesa (ex.: K7P2X)" maxlength="8" autocomplete="off">
+    <div class="lobby-actions">
+      <button class="btn primary" id="join">Entrar na mesa <span>→</span></button>
+      <button class="btn" id="create">＋ Criar nova mesa como mestre</button>
+    </div>
+    <div id="msg" class="lobby-note">Dica: compartilhe o link de convite com seus jogadores.</div>
+  </div>
+</section>
+
+<section id="app" class="hidden">
+  <header class="topbar">
+    <div class="brand"><div class="brandmark">♟</div><span>Tabletop</span></div>
+    <div class="top-divider"></div>
+    <div class="room-name">Mesa <span id="room-code">-----</span> <small>• sessão online</small></div>
+    <div class="top-spacer"></div>
+    <div class="status"><span class="dot"></span><span id="connection">Conectando</span></div>
+    <span class="role" id="role">Jogador</span>
+    <button class="btn" id="invite">↗ Convidar</button>
+    <button class="btn icon ghost" id="leave" title="Sair da mesa">×</button>
+  </header>
+
+  <div class="workspace">
+    <aside class="sidebar left">
+      <div class="side-head"><span>Workspace</span><button class="btn icon ghost" id="collapse-left" title="Painel">‹</button></div>
+      <div class="side-scroll">
+        <section class="section">
+          <div class="section-title">Ferramentas <span>⌘</span></div>
+          <div class="tool-grid">
+            <button class="tool active" id="tool-select"><span>↖</span>Selecionar</button>
+            <button class="tool" id="tool-pan"><span>✋</span>Mover tela</button>
+            <button class="tool" id="tool-grid"><span>▦</span>Grade</button>
+          </div>
+        </section>
+        <section class="section">
+          <div class="section-title">Cena <button class="btn icon ghost" id="upload-map" title="Adicionar mapa">＋</button></div>
+          <button class="list-item" id="map-row"><span class="avatar">▧</span><span class="item-copy"><strong id="map-name">Mapa da sessão</strong><small id="map-status">Nenhum mapa carregado</small></span><span class="item-more">•••</span></button>
+          <input id="map-file" type="file" accept="image/*" class="hidden">
+        </section>
+        <section class="section">
+          <div class="section-title">Personagens e NPCs <button class="btn icon ghost" id="add-token" title="Adicionar token">＋</button></div>
+          <input id="token-search" class="search" type="text" placeholder="Buscar personagem...">
+          <div id="token-list" class="list" style="margin-top:9px"></div>
+        </section>
+        <section class="section">
+          <div class="section-title">Biblioteca <button class="btn icon ghost" id="add-library" title="Criar item">＋</button></div>
+          <div id="library-list"></div>
+        </section>
+      </div>
+    </aside>
+
+    <main class="center">
+      <div class="canvas-toolbar">
+        <div class="toolbar-group"><span class="canvas-label">Canvas</span><button class="btn icon" id="fit" title="Enquadrar mapa">⌗</button><button class="btn icon" id="zoom-out" title="Diminuir zoom">−</button><button class="btn" id="zoom-label" style="min-width:58px">100%</button><button class="btn icon" id="zoom-in" title="Aumentar zoom">＋</button></div>
+        <div class="toolbar-sep"></div>
+        <div class="toolbar-group"><button class="btn" id="toggle-grid">▦ Grade</button><button class="btn" id="toggle-names">◉ Nomes</button></div>
+        <div class="top-spacer"></div>
+        <div class="toolbar-group"><button class="btn" id="change-map">＋ Mapa</button><button class="btn primary" id="quick-npc">＋ NPC</button></div>
+      </div>
+
+      <div class="canvas-area" id="canvas-area">
+        <div class="canvas-viewport" id="canvas-viewport">
+          <div id="board" class="board no-map"></div>
+        </div>
+        <div class="canvas-hint">Arraste tokens para mover • Espaço + arrastar para navegar • Scroll para zoom</div>
+        <div class="zoom-indicator" id="zoom-indicator">100%</div>
+      </div>
+
+      <div class="bottom-panel">
+        <section class="chat-panel">
+          <div class="panel-title"><span>Chat da mesa</span><button class="btn ghost" id="clear-chat" title="Limpar chat">Limpar</button></div>
+          <div id="log" class="chat-log"></div>
+          <div class="chat-compose"><input id="cin" type="text" placeholder="Mensagem ou /r 1d20+3" maxlength="300"><button class="btn primary" id="csend">Enviar</button></div>
+        </section>
+        <section class="dice-panel">
+          <div class="panel-title">Rolagem rápida</div>
+          <div class="dice-grid">
+            <button class="dice" data-die="d4">d4</button><button class="dice" data-die="d6">d6</button><button class="dice" data-die="d8">d8</button><button class="dice" data-die="d10">d10</button>
+            <button class="dice" data-die="d12">d12</button><button class="dice" data-die="d20">d20</button><button class="dice" data-die="d100">d100</button><button class="dice" data-die="2d20">2d20</button>
+          </div>
+          <div class="dice-result" id="dice-result">Escolha um dado para rolar.</div>
+        </section>
+      </div>
+    </main>
+
+    <aside class="sidebar right">
+      <div class="side-head"><span>Propriedades</span><button class="btn icon ghost" id="close-properties" title="Desselecionar">×</button></div>
+      <div id="inspector" class="side-scroll">
+        <div class="prop-empty">Selecione um token no tabuleiro ou na lista para editar suas propriedades.</div>
+      </div>
+    </aside>
+  </div>
+</section>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-// ===== COLE AQUI os dados do seu projeto Supabase =====
-const SB_URL='https://ywakihnmuznvtpczbchq.supabase.co', SB_KEY='sb_publishable_TXinXVh_9LQklmqPVE_ljw_ujl61Qdz';
-// ======================================================
+'use strict';
+// Mantidos os dados do projeto Supabase do arquivo original.
+const SB_URL='https://ywakihnmuznvtpczbchq.supabase.co';
+const SB_KEY='sb_publishable_TXinXVh_9LQklmqPVE_ljw_ujl61Qdz';
 const $=id=>document.getElementById(id);
 const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){}};
-let sb,uid,code,room={},toks=[],msgs=[],isGM=false,myName='',drag=null,ed=null,asked=false,imgRatio=null,lastUrl=null,pend='',timer;
-const clamp=v=>Math.max(0,Math.min(100,v));
-function toast(t){const e=$('toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',2800)}
-async function safe(fn){try{const r=await fn();if(r&&r.error)throw r.error}catch(e){toast('Não foi possível: '+((e&&e.message)||'erro'))}}
-const T=()=>sb.from('tokens');
-const setRoom=p=>{Object.assign(room,p);render();safe(()=>sb.from('rooms').update(p).eq('id',code))};
-function paint(el,t){el.style.backgroundColor=t.img?'transparent':(t.color||'#888');el.style.backgroundImage=t.img?'url("'+t.img+'")':'none';el.textContent=t.img?'':(t.emoji||(t.name||'?').slice(0,1).toUpperCase())}
-function shrink(f,n){return new Promise((ok,no)=>{const im=new Image(),u=URL.createObjectURL(f);im.onload=()=>{const k=Math.min(1,n/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?ok(b):no(new Error('imagem inválida')),'image/webp',.9)};im.onerror=()=>no(new Error('imagem inválida'));im.src=u})}
-async function upload(blob,ext,type){
-  const path=code+'/'+uid.slice(0,8)+'-'+Date.now()+'.'+ext;
-  const r=await sb.storage.from('mesa').upload(path,blob,{contentType:type});
-  if(r.error)throw r.error;
-  return sb.storage.from('mesa').getPublicUrl(path).data.publicUrl;
-}
+const clamp=(v,min=0,max=100)=>Math.max(min,Math.min(max,v));
+let sb,uid,code,room={},tokens=[],messages=[],isGM=false,myName='',selectedId=null,editing=null;
+let channel=null,refreshTimer=null,zoom=1,panX=0,panY=0,dragToken=null,panDrag=null,spaceDown=false;
+let showNames=true,tool='select',lastMapUrl='',mapRatio=null,uploadPending='',broadcastAt=0;
 
-function render(){
-  if(drag||!code)return;
-  const b=$('board'),u=room.map_url||'';
-  b.className=room.grid?'grid':'';
-  b.style.width=(room.scale||100)+'%';
-  b.style.backgroundImage=u?'url("'+u+'")':'none';
-  if(u!==lastUrl){lastUrl=u;imgRatio=null;if(u){const im=new Image();im.onload=()=>{if(lastUrl===u){imgRatio=im.naturalWidth+'/'+im.naturalHeight;render()}};im.src=u}}
-  b.style.aspectRatio=(room.ratio&&room.ratio!=='auto')?room.ratio:(imgRatio||'16/10');
-  b.querySelectorAll('.tok').forEach(e=>e.remove());
-  toks.filter(t=>t.kind!=='lib').forEach(t=>{
-    const can=isGM||(t.kind==='pl'&&t.owner===uid);
-    const el=document.createElement('div');
-    el.className='tok'+(can?' can':'');
-    el.style.cssText='--s:'+(t.size||8)+';left:'+t.x+'%;top:'+t.y+'%';
-    paint(el,t);
-    if(t.img){el.className+=' img';const im=new Image();im.src=t.img;im.draggable=false;el.appendChild(im)}
-    const n=document.createElement('span');n.className='n';n.textContent=t.name||'';el.appendChild(n);
-    if(can){
-      el.onpointerdown=e=>{e.preventDefault();el.setPointerCapture(e.pointerId);drag={el,t,sx:e.clientX,sy:e.clientY,moved:false}};
-      el.onpointermove=e=>{
-        if(!drag||drag.el!==el)return;
-        if(Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)>4)drag.moved=true;
-        if(!drag.moved)return;
-        const r=b.getBoundingClientRect();
-        drag.x=clamp((e.clientX-r.left)/r.width*100);drag.y=clamp((e.clientY-r.top)/r.height*100);
-        el.style.left=drag.x+'%';el.style.top=drag.y+'%';
-      };
-      el.onpointerup=async()=>{
-        const d=drag;drag=null;if(!d)return;
-        if(!d.moved){openEd(t.kind,t.id);return}
-        t.x=d.x;t.y=d.y;
-        await safe(()=>T().update({x:d.x,y:d.y}).eq('id',t.id));
-        render();
-      };
-    }
-    b.appendChild(el);
-  });
-  const mine=toks.find(t=>t.kind==='pl'&&t.owner===uid);
-  $('mine').textContent=mine?'Editar meu token':'Criar meu token';
-  if(!isGM&&!asked&&!mine){asked=true;openEd('pl',null)}
+function toast(message){
+  const el=$('toast');el.textContent=message;el.style.display='block';
+  clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.display='none',2800);
 }
-function renderLib(){
-  const l=$('libl');l.textContent='';
-  const items=toks.filter(t=>t.kind==='lib');
-  if(!items.length){l.textContent='Biblioteca vazia. Crie tokens aqui ou salve NPCs do mapa para reutilizar.';return}
-  items.forEach(t=>{
-    const c=document.createElement('div');c.className='chip';
-    const i=document.createElement('span');i.className='mini';paint(i,t);
-    const nm=document.createElement('button');nm.textContent=t.name;nm.title='Colocar no mapa';
-    nm.onclick=()=>safe(()=>T().insert({room:code,kind:'npc',x:50,y:50,name:t.name,emoji:t.emoji,color:t.color,size:t.size,img:t.img}));
-    const ee=document.createElement('button');ee.textContent='✎';ee.onclick=()=>openEd('lib',t.id);
-    const dd=document.createElement('button');dd.textContent='✕';dd.onclick=()=>safe(()=>T().delete().eq('id',t.id));
-    c.append(i,nm,ee,dd);l.appendChild(c);
+function reportError(error){console.error(error);toast('Não foi possível concluir: '+(error?.message||'erro'))}
+async function runSafe(fn){try{const result=await fn();if(result?.error)throw result.error;return result}catch(e){reportError(e);return null}}
+const tokenTable=()=>sb.from('tokens');
+
+function setTool(next){
+  tool=next;
+  $('tool-select').classList.toggle('active',tool==='select');
+  $('tool-pan').classList.toggle('active',tool==='pan');
+  $('board').style.cursor=tool==='pan'?'grab':'default';
+}
+function updateZoom(){
+  const board=$('board');
+  board.style.setProperty('--zoom',zoom);
+  board.style.setProperty('--pan-x',panX+'px');
+  board.style.setProperty('--pan-y',panY+'px');
+  $('zoom-label').textContent=Math.round(zoom*100)+'%';
+  $('zoom-indicator').textContent=Math.round(zoom*100)+'%';
+}
+function setZoom(value){
+  zoom=Math.max(.35,Math.min(2.5,value));updateZoom();
+}
+function resetView(){zoom=1;panX=0;panY=0;updateZoom()}
+function updateBoard(){
+  if(!code)return;
+  const board=$('board'),url=room.map_url||'';
+  board.classList.toggle('grid',!!room.grid);
+  board.classList.toggle('no-map',!url);
+  board.style.backgroundImage=url?'url("'+url.replace(/["\\]/g,'')+'")':'';
+  board.style.aspectRatio=(room.ratio&&room.ratio!=='auto')?room.ratio:(mapRatio||'16/10');
+  $('map-name').textContent=url?'Mapa da sessão':'Mapa da sessão';
+  $('map-status').textContent=url?'Mapa carregado':'Nenhum mapa carregado';
+  $('toggle-grid').classList.toggle('primary',!!room.grid);
+  if(url!==lastMapUrl){
+    lastMapUrl=url;mapRatio=null;
+    if(url){const image=new Image();image.onload=()=>{if(lastMapUrl===url){mapRatio=image.naturalWidth+'/'+image.naturalHeight;board.style.aspectRatio=(room.ratio&&room.ratio!=='auto')?room.ratio:mapRatio}};image.src=url}
+  }
+  renderTokens();
+}
+function makeAvatar(token){
+  const a=document.createElement('span');a.className='avatar';
+  if(token.img){const img=document.createElement('img');img.src=token.img;img.alt='';a.appendChild(img)}
+  else{a.textContent=token.emoji||(token.name||'?').slice(0,1).toUpperCase();a.style.background=token.color||'#565d70'}
+  return a;
+}
+function canMove(token){return isGM||(token.kind==='pl'&&token.owner===uid)}
+function selectToken(id){
+  selectedId=id;renderTokens();renderTokenList();renderInspector();
+}
+function renderTokens(){
+  const board=$('board');
+  board.querySelectorAll('.token').forEach(node=>node.remove());
+  tokens.filter(t=>t.kind!=='lib').forEach(token=>{
+    const el=document.createElement('div');el.className='token';
+    el.dataset.id=token.id;el.style.left=(token.x??50)+'%';el.style.top=(token.y??50)+'%';
+    el.style.setProperty('--token-size',(token.size||8)+'%');
+    el.style.background=token.img?'transparent':(token.color||'#7b70aa');
+    el.textContent=token.img?'':(token.emoji||(token.name||'?').slice(0,1).toUpperCase());
+    if(token.img){el.classList.add('image-token');const img=document.createElement('img');img.src=token.img;img.alt=token.name||'Token';el.appendChild(img)}
+    if(canMove(token))el.classList.add('movable');
+    if(token.id===selectedId)el.classList.add('selected');
+    if(showNames){const label=document.createElement('span');label.className='token-name';label.textContent=token.name||'';el.appendChild(label)}
+    el.addEventListener('pointerdown',event=>onTokenDown(event,token,el));
+    el.addEventListener('click',event=>{event.stopPropagation();if(!dragToken?.moved)selectToken(token.id)});
+    board.appendChild(el);
   });
+}
+function renderTokenList(){
+  const list=$('token-list'),query=$('token-search').value.trim().toLowerCase();list.textContent='';
+  const visible=tokens.filter(t=>t.kind!=='lib'&&(!query||(t.name||'').toLowerCase().includes(query)));
+  if(!visible.length){const e=document.createElement('div');e.className='empty';e.textContent='Nenhum personagem ou NPC nesta mesa.';list.appendChild(e);return}
+  visible.forEach(t=>{
+    const b=document.createElement('button');b.className='list-item'+(t.id===selectedId?' selected':'');b.type='button';
+    b.append(makeAvatar(t));
+    const copy=document.createElement('span');copy.className='item-copy';
+    const strong=document.createElement('strong');strong.textContent=t.name||'Sem nome';
+    const small=document.createElement('small');small.textContent=t.kind==='pl'?'Jogador':'NPC';
+    copy.append(strong,small);b.append(copy);
+    const more=document.createElement('span');more.className='item-more';more.textContent='›';b.append(more);
+    b.onclick=()=>selectToken(t.id);list.appendChild(b);
+  });
+}
+function renderLibrary(){
+  const list=$('library-list');list.textContent='';
+  const items=tokens.filter(t=>t.kind==='lib');
+  if(!items.length){const e=document.createElement('div');e.className='empty';e.textContent='Sua biblioteca está vazia. Salve NPCs para reutilizar em outras cenas.';list.appendChild(e);return}
+  items.forEach(t=>{
+    const card=document.createElement('div');card.className='library-card';card.append(makeAvatar(t));
+    const copy=document.createElement('span');copy.className='item-copy';const name=document.createElement('strong');name.textContent=t.name||'Sem nome';const small=document.createElement('small');small.textContent='Biblioteca';copy.append(name,small);card.append(copy);
+    const add=document.createElement('button');add.className='btn';add.textContent='＋';add.title='Adicionar ao mapa';add.onclick=()=>runSafe(()=>tokenTable().insert({room:code,kind:'npc',x:50,y:50,name:t.name,emoji:t.emoji,color:t.color,size:t.size,img:t.img}));
+    const edit=document.createElement('button');edit.className='btn';edit.textContent='✎';edit.title='Editar';edit.onclick=()=>openInspector(t.id);
+    card.append(add,edit);list.appendChild(card);
+  });
+}
+function renderInspector(){
+  const root=$('inspector');root.textContent='';
+  const token=tokens.find(t=>t.id===selectedId);
+  if(!token){const empty=document.createElement('div');empty.className='prop-empty';empty.textContent='Selecione um token no tabuleiro ou na lista para editar suas propriedades.';root.appendChild(empty);return}
+  const allowed=canMove(token);
+  const title=document.createElement('div');title.className='section-title';title.textContent=token.kind==='lib'?'Item da biblioteca':(token.kind==='pl'?'Personagem':'NPC');root.appendChild(title);
+  if(!allowed&&token.kind!=='lib'){const note=document.createElement('div');note.className='empty';note.textContent='Você pode visualizar este personagem, mas somente o mestre ou o dono pode editá-lo.';root.appendChild(note);return}
+  const form=document.createElement('div');
+  form.innerHTML=`
+    <div class="field"><label>Nome</label><input id="p-name" type="text" maxlength="20"></div>
+    <div class="field-row"><div class="field"><label>Emoji</label><input id="p-emoji" type="text" maxlength="4"></div><div class="field"><label>Cor</label><input id="p-color" type="color"></div></div>
+    <div class="field"><label>Tamanho <span id="p-size-label"></span></label><input id="p-size" type="range" min="3" max="30" value="8"></div>
+    <div class="field"><label>Imagem do token</label><input id="p-image" type="file" accept="image/*"></div>
+    <div class="field"><label>Posição no mapa</label><div class="field-row"><input id="p-x" type="number" min="0" max="100" step="0.5" placeholder="X"><input id="p-y" type="number" min="0" max="100" step="0.5" placeholder="Y"></div></div>
+    <div class="property-actions"><button class="btn primary" id="p-save">Salvar alterações</button><button class="btn" id="p-center">Centralizar</button></div>
+    <div class="property-actions" style="margin-top:8px"><button class="btn" id="p-library">Salvar na biblioteca</button><button class="btn danger" id="p-delete">Excluir</button></div>`;
+  root.appendChild(form);
+  $('p-name').value=token.name||'';$('p-emoji').value=token.emoji||'';$('p-color').value=token.color||'#7b70aa';$('p-size').value=token.size||8;
+  $('p-size-label').textContent=(token.size||8)+'%';$('p-x').value=Number(token.x??50).toFixed(1);$('p-y').value=Number(token.y??50).toFixed(1);
+  $('p-size').oninput=()=>{$('p-size-label').textContent=$('p-size').value+'%';const el=$('board').querySelector('[data-id="'+token.id+'"]');if(el)el.style.setProperty('--token-size',$('p-size').value+'%')};
+  $('p-save').onclick=()=>saveInspector(token);
+  $('p-center').onclick=()=>{ $('p-x').value=50;$('p-y').value=50;saveInspector(token) };
+  $('p-delete').onclick=()=>deleteToken(token);
+  $('p-library').onclick=()=>saveToLibrary(token);
+  $('p-image').onchange=async e=>{
+    const file=e.target.files?.[0];if(!file)return;
+    try{const blob=await resizeImage(file,512);const url=await upload(blob,'webp','image/webp');token.img=url;toast('Imagem carregada. Clique em Salvar alterações.');renderInspector()}catch(err){reportError(err)}
+  };
+}
+async function saveInspector(token){
+  const patch={name:$('p-name').value.trim()||'Sem nome',emoji:$('p-emoji').value.trim(),color:$('p-color').value,size:+$('p-size').value,x:clamp(+$('p-x').value),y:clamp(+$('p-y').value)};
+  if(token.img)patch.img=token.img;
+  const result=await runSafe(()=>tokenTable().update(patch).eq('id',token.id));
+  if(result){Object.assign(token,patch);renderAll();toast('Propriedades salvas.')}
+}
+async function deleteToken(token){
+  if(!confirm('Excluir "'+(token.name||'token')+'"?'))return;
+  const result=await runSafe(()=>tokenTable().delete().eq('id',token.id));
+  if(result){tokens=tokens.filter(t=>t.id!==token.id);selectedId=null;renderAll();toast('Token excluído.')}
+}
+async function saveToLibrary(token){
+  const result=await runSafe(()=>tokenTable().insert({room:code,kind:'lib',name:token.name,emoji:token.emoji,color:token.color,size:token.size,img:token.img}));
+  if(result)toast('Adicionado à biblioteca.');
+}
+function openInspector(id){
+  const token=tokens.find(t=>t.id===id);if(!token)return;
+  selectToken(id);
 }
 function renderChat(){
-  const l=$('log'),bot=l.scrollTop+l.clientHeight>=l.scrollHeight-30;l.textContent='';
-  msgs.forEach(m=>{const d=document.createElement('div');d.className=m.roll?'roll':'';const n=document.createElement('b');n.textContent=m.name+': ';d.append(n,document.createTextNode(m.text));l.appendChild(d)});
-  if(bot)l.scrollTop=l.scrollHeight;
+  const log=$('log'),atBottom=log.scrollTop+log.clientHeight>=log.scrollHeight-30;log.textContent='';
+  messages.forEach(m=>{
+    const row=document.createElement('div');row.className='chat-line'+(m.roll?' roll':'');
+    const name=document.createElement('b');name.textContent=(m.name||'Jogador')+': ';
+    const text=document.createTextNode(m.text||'');row.append(name,text);log.appendChild(row);
+  });
+  if(atBottom)log.scrollTop=log.scrollHeight;
 }
+function renderAll(){updateBoard();renderTokenList();renderLibrary();renderInspector();renderChat()}
+function onTokenDown(event,token,element){
+  if(event.button!==0)return;
+  const panMode=tool==='pan'||spaceDown;
+  if(!canMove(token)||panMode){
+    if(panMode){startPan(event);return}
+    return;
+  }
+  event.preventDefault();event.stopPropagation();element.setPointerCapture(event.pointerId);
+  dragToken={id:token.id,token,element,startX:event.clientX,startY:event.clientY,moved:false,lastSent:0};
+  element.style.transition='none';
+}
+function onTokenMove(event){
+  if(!dragToken)return;
+  const d=dragToken;
+  if(Math.hypot(event.clientX-d.startX,event.clientY-d.startY)>3)d.moved=true;
+  if(!d.moved)return;
+  const rect=$('board').getBoundingClientRect();
+  const x=clamp((event.clientX-rect.left)/rect.width*100),y=clamp((event.clientY-rect.top)/rect.height*100);
+  d.x=x;d.y=y;d.element.style.left=x+'%';d.element.style.top=y+'%';
+  const now=performance.now();
+  if(now-d.lastSent>45){d.lastSent=now;broadcastMove(d.id,x,y)}
+}
+async function onTokenUp(){
+  if(!dragToken)return;
+  const d=dragToken;dragToken=null;d.element.style.transition='';
+  if(!d.moved){selectToken(d.id);return}
+  d.token.x=d.x;d.token.y=d.y;
+  await runSafe(()=>tokenTable().update({x:d.x,y:d.y}).eq('id',d.id));
+  renderTokenList();renderInspector();
+  broadcastMove(d.id,d.x,d.y);
+}
+function broadcastMove(id,x,y){
+  if(!channel)return;
+  channel.send({type:'broadcast',event:'token_move',payload:{id,x,y,from:uid}}).catch(()=>{});
+}
+function startPan(event){
+  event.preventDefault();const area=$('canvas-viewport');
+  panDrag={x:event.clientX,y:event.clientY,px:panX,py:panY};
+  area.setPointerCapture?.(event.pointerId);
+}
+function movePan(event){
+  if(!panDrag)return;
+  panX=panDrag.px+(event.clientX-panDrag.x);panY=panDrag.py+(event.clientY-panDrag.y);updateZoom();
+}
+function stopPan(){panDrag=null}
+$('canvas-viewport').addEventListener('pointerdown',e=>{
+  if(e.target===$('canvas-viewport')||e.target===$('board')){
+    if(tool==='pan'||spaceDown)startPan(e);
+    else if(e.target===$('board'))selectToken(null);
+  }
+});
+$('canvas-viewport').addEventListener('pointermove',e=>{onTokenMove(e);movePan(e)});
+$('canvas-viewport').addEventListener('pointerup',()=>{onTokenUp();stopPan()});
+$('canvas-viewport').addEventListener('pointercancel',()=>{onTokenUp();stopPan()});
+$('canvas-viewport').addEventListener('wheel',e=>{e.preventDefault();setZoom(zoom*(e.deltaY<0?1.08:.92))},{passive:false});
+window.addEventListener('keydown',e=>{if(e.code==='Space'&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){spaceDown=true;e.preventDefault()}});
+window.addEventListener('keyup',e=>{if(e.code==='Space')spaceDown=false});
+window.addEventListener('blur',()=>{spaceDown=false;stopPan()});
 
-function prev(){paint($('f-prev'),{color:$('f-color').value,img:pend,emoji:$('f-emoji').value,name:$('f-name').value})}
-function openEd(kind,id){
-  const t=toks.find(x=>x.id===id)||{};
-  ed={kind,id};pend=t.img||'';
-  $('f-name').value=t.name||'';$('f-emoji').value=t.emoji||'';
-  $('f-color').value=t.color||(kind==='pl'?'#2e86de':'#c0392b');
-  $('f-size').value=t.size||8;
-  $('e-del').style.display=id?'':'none';
-  $('e-lib').style.display=(isGM&&kind==='npc')?'':'none';
-  prev();$('ed').classList.add('on');
+function rollDice(expression){
+  const match=expression.match(/^(\d*)d(\d+)\s*([+-]\s*\d+)?$/i);if(!match)return null;
+  const count=Math.min(+match[1]||1,20),faces=Math.min(+match[2],1000);if(faces<2)return null;
+  const rolls=Array.from({length:count},()=>1+Math.floor(Math.random()*faces));
+  const modifier=match[3]?+match[3].replace(/\s/g,''):0;
+  const modText=modifier?(modifier>0?'+':'')+modifier:'';
+  return {text:'🎲 '+count+'d'+faces+modText+' → ['+rolls.join(', ')+'] = '+(rolls.reduce((a,b)=>a+b,0)+modifier),rolls,total:rolls.reduce((a,b)=>a+b,0)+modifier};
 }
-function closeEd(){$('ed').classList.remove('on');ed=null}
-function fields(){return{name:$('f-name').value.trim()||'Sem nome',emoji:$('f-emoji').value.trim(),color:$('f-color').value,size:isGM?+$('f-size').value:Math.min(+$('f-size').value,12),img:pend}}
-['f-name','f-emoji','f-color'].forEach(i=>$(i).oninput=prev);
-$('f-noimg').onclick=()=>{pend='';prev()};
-$('f-file').onchange=async e=>{
-  const f=e.target.files[0];if(!f)return;
-  toast('Enviando foto…');
-  await safe(async()=>{pend=await upload(await shrink(f,512),'webp','image/webp');prev()});
-  e.target.value='';
-};
-$('e-x').onclick=closeEd;
-$('e-save').onclick=()=>{
-  if(!ed)return;const {kind,id}=ed,f=fields();closeEd();
-  safe(()=>id?T().update(f).eq('id',id):T().insert(Object.assign({room:code,kind,x:50,y:50,owner:kind==='pl'?uid:null},f)));
-};
-$('e-lib').onclick=()=>{const f=fields();closeEd();safe(()=>T().insert(Object.assign({room:code,kind:'lib'},f)));toast('Salvo na biblioteca')};
-$('e-del').onclick=()=>{if(!ed||!ed.id)return;const id=ed.id;closeEd();safe(()=>T().delete().eq('id',id))};
-$('mine').onclick=()=>{const m=toks.find(t=>t.kind==='pl'&&t.owner===uid);openEd('pl',m?m.id:null)};
-$('addnpc').onclick=()=>openEd('npc',null);
-$('newlib').onclick=()=>openEd('lib',null);
-$('liblb').onclick=()=>{const p=$('libp');p.style.display=p.style.display==='none'?'flex':'none'};
-$('nomap').onclick=()=>setRoom({map_url:null});
-$('grid').onchange=e=>setRoom({grid:e.target.checked});
-$('scale').onchange=e=>setRoom({scale:+e.target.value});
-$('ratio').onchange=e=>setRoom({ratio:e.target.value});
-$('file').onchange=async e=>{
-  const f=e.target.files[0];if(!f)return;
-  toast('Enviando mapa…');
-  await safe(async()=>{const ext=(f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');setRoom({map_url:await upload(f,ext,f.type)})});
-  e.target.value='';
-};
-
-function roll(s){
-  const m=s.match(/^(\d*)d(\d+)\s*([+-]\s*\d+)?$/i);if(!m)return null;
-  const n=Math.min(+m[1]||1,20),f=Math.min(+m[2],1000);if(f<2)return null;
-  const r=[];for(let i=0;i<n;i++)r.push(1+Math.floor(Math.random()*f));
-  const k=m[3]?+m[3].replace(/\s/g,''):0,ks=k?(k>0?'+':'')+k:'';
-  return '🎲 '+n+'d'+f+ks+' → ['+r.join(', ')+']'+ks+' = '+(r.reduce((a,b)=>a+b,0)+k);
+async function sendMessage(raw){
+  const input=$('cin'),value=(raw??input.value).trim();if(!value)return;
+  let text=value,isRoll=false;
+  const match=value.match(/^\/r(?:oll)?\s+(.+)$/i);
+  if(match){const result=rollDice(match[1].trim());if(!result){toast('Formato inválido. Exemplo: /r 1d20+3');return}text=result.text;isRoll=true}
+  input.value='';
+  const mine=tokens.find(t=>t.kind==='pl'&&t.owner===uid);
+  const name=isGM?'Mestre':(mine?.name||myName||'Jogador');
+  await runSafe(()=>sb.from('messages').insert({room:code,name,text,roll:isRoll}));
 }
-function send(){
-  const inp=$('cin'),s=inp.value.trim();if(!s)return;
-  let text=s,isRoll=false;const rm=s.match(/^\/r(?:oll)?\s+(.+)$/i);
-  if(rm){const r=roll(rm[1].trim());if(!r){toast('Exemplo: /r 1d20+3');return}text=r;isRoll=true}
-  inp.value='';
-  const mine=toks.find(t=>t.kind==='pl'&&t.owner===uid);
-  const name=isGM?'Mestre':(mine&&mine.name)||myName||'Jogador';
-  safe(()=>sb.from('messages').insert({room:code,name,text,roll:isRoll}));
+function resizeImage(file,maxSize){
+  return new Promise((resolve,reject)=>{
+    const image=new Image(),url=URL.createObjectURL(file);
+    image.onload=()=>{const scale=Math.min(1,maxSize/Math.max(image.width,image.height));const canvas=document.createElement('canvas');canvas.width=Math.round(image.width*scale);canvas.height=Math.round(image.height*scale);canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);URL.revokeObjectURL(url);canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Não foi possível processar a imagem.')),'image/webp',.9)};
+    image.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Imagem inválida.'))};image.src=url;
+  });
 }
-$('csend').onclick=send;
-$('cin').onkeydown=e=>{if(e.key==='Enter')send()};
-$('cclr').onclick=()=>safe(()=>sb.from('messages').delete().eq('room',code));
-
-async function load(){
-  const [r,t,m]=await Promise.all([
+async function upload(blob,extension,type){
+  const path=code+'/'+uid.slice(0,8)+'-'+Date.now()+'.'+extension;
+  const result=await sb.storage.from('mesa').upload(path,blob,{contentType:type,upsert:false});
+  if(result.error)throw result.error;
+  return sb.storage.from('mesa').getPublicUrl(path).data.publicUrl;
+}
+async function loadRoom(){
+  const [roomResult,tokenResult,messageResult]=await Promise.all([
     sb.from('rooms').select().eq('id',code).maybeSingle(),
-    sb.from('tokens').select().eq('room',code),
-    sb.from('messages').select().eq('room',code).order('created_at',{ascending:false}).limit(60)]);
-  if(r.data)room=r.data;if(t.data)toks=t.data;if(m.data)msgs=m.data.reverse();
+    tokenTable().select().eq('room',code),
+    sb.from('messages').select().eq('room',code).order('created_at',{ascending:false}).limit(80)
+  ]);
+  if(roomResult.error)throw roomResult.error;if(tokenResult.error)throw tokenResult.error;if(messageResult.error)throw messageResult.error;
+  if(!roomResult.data)throw new Error('Mesa não encontrada ou sem permissão.');
+  room=roomResult.data;tokens=tokenResult.data||[];messages=(messageResult.data||[]).reverse();
   isGM=room.gm===uid;
   $('role').textContent=isGM?'Mestre':'Jogador';
-  $(isGM?'gm':'pl').style.display='flex';
-  $('grid').checked=!!room.grid;$('scale').value=room.scale||100;$('ratio').value=room.ratio||'auto';
-  render();renderLib();renderChat();
+  $('clear-chat').classList.toggle('hidden',!isGM);
+  $('quick-npc').classList.toggle('hidden',!isGM);
+  $('add-token').classList.toggle('hidden',!isGM);
+  $('add-library').classList.toggle('hidden',!isGM);
+  $('room-code').textContent=code;
+  renderAll();
+  if(!isGM&&!tokens.some(t=>t.kind==='pl'&&t.owner===uid))openCreatePlayer();
 }
-const sched=()=>{clearTimeout(timer);timer=setTimeout(load,120)};
-async function start(c){
-  code=c;myName=$('name').value.trim()||'Jogador';LS('rpg_name',myName);LS('rpg_code',c);
-  await load();
-  $('lobby').style.display='none';$('app').style.display='block';$('inv').style.display='';
-  document.title='Mesa '+c;
-  sb.channel('mesa-'+c)
-    .on('postgres_changes',{event:'*',schema:'public',table:'tokens',filter:'room=eq.'+c},sched)
-    .on('postgres_changes',{event:'*',schema:'public',table:'rooms',filter:'id=eq.'+c},sched)
-    .on('postgres_changes',{event:'*',schema:'public',table:'messages',filter:'room=eq.'+c},sched)
-    .subscribe();
+function scheduleRefresh(){
+  clearTimeout(refreshTimer);refreshTimer=setTimeout(async()=>{
+    try{await loadRoom()}catch(e){console.warn(e)}
+  },220);
+}
+function subscribeRoom(){
+  if(channel)sb.removeChannel(channel);
+  channel=sb.channel('table-'+code,{config:{broadcast:{self:false}}})
+    .on('postgres_changes',{event:'*',schema:'public',table:'tokens',filter:'room=eq.'+code},scheduleRefresh)
+    .on('postgres_changes',{event:'*',schema:'public',table:'rooms',filter:'id=eq.'+code},scheduleRefresh)
+    .on('postgres_changes',{event:'*',schema:'public',table:'messages',filter:'room=eq.'+code},scheduleRefresh)
+    .on('broadcast',{event:'token_move'},({payload})=>{
+      if(!payload||payload.from===uid)return;
+      const token=tokens.find(t=>t.id===payload.id);if(token){token.x=payload.x;token.y=payload.y;const el=$('board').querySelector('[data-id="'+payload.id+'"]');if(el){el.classList.add('remote-moving');el.style.left=payload.x+'%';el.style.top=payload.y+'%';setTimeout(()=>el.classList.remove('remote-moving'),180)}}
+    })
+    .subscribe(status=>{$('connection').textContent=status==='SUBSCRIBED'?'Sincronizado':status==='CHANNEL_ERROR'?'Falha na conexão':'Conectando';});
+}
+async function startRoom(roomCode){
+  code=roomCode.toUpperCase();myName=$('name').value.trim()||'Jogador';LS('rpg_name',myName);LS('rpg_code',code);
+  try{
+    await loadRoom();$('lobby').classList.add('hidden');$('app').classList.remove('hidden');document.title='Tabletop — '+code;
+    subscribeRoom();resetView();
+  }catch(e){toast(e.message||'Não foi possível abrir a mesa.')}
+}
+function openCreatePlayer(){
+  selectedId=null;
+  const root=$('inspector');root.innerHTML=`
+    <div class="section-title">Seu personagem</div>
+    <div class="field"><label>Nome do personagem</label><input id="new-name" type="text" maxlength="20" placeholder="Nome"></div>
+    <div class="field-row"><div class="field"><label>Emoji</label><input id="new-emoji" type="text" maxlength="4" value="🙂"></div><div class="field"><label>Cor</label><input id="new-color" type="color" value="#3989d8"></div></div>
+    <div class="field"><label>Tamanho</label><input id="new-size" type="range" min="3" max="12" value="8"></div>
+    <button class="btn primary" id="create-player" style="width:100%">Criar meu token</button>`;
+  $('create-player').onclick=async()=>{
+    const name=$('new-name').value.trim()||myName;
+    const result=await runSafe(()=>tokenTable().insert({room:code,kind:'pl',owner:uid,x:50,y:50,name,emoji:$('new-emoji').value,color:$('new-color').value,size:+$('new-size').value}).select().single());
+    if(result?.data){tokens.push(result.data);selectedId=result.data.id;renderAll();toast('Seu personagem foi criado.')}
+  };
+}
+async function createToken(kind='npc'){
+  if(kind==='npc'&&!isGM)return;
+  const result=await runSafe(()=>tokenTable().insert({room:code,kind,x:50,y:50,name:kind==='pl'?myName:'Novo NPC',emoji:kind==='pl'?'🙂':'👹',color:kind==='pl'?'#3989d8':'#b75b5b',size:8,owner:kind==='pl'?uid:null}).select().single());
+  if(result?.data){tokens.push(result.data);selectedId=result.data.id;renderAll();renderInspector()}
+}
+async function uploadMap(file){
+  if(!isGM){toast('Somente o mestre pode trocar o mapa.');return}
+  toast('Enviando mapa…');
+  try{
+    const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+    const url=await upload(file,ext,file.type||'image/jpeg');
+    const result=await runSafe(()=>sb.from('rooms').update({map_url:url}).eq('id',code));
+    if(result){room.map_url=url;renderAll();toast('Mapa atualizado para todos.')}
+  }catch(e){reportError(e)}
+}
+function invite(){
+  const url=location.origin+location.pathname+'?sala='+encodeURIComponent(code);
+  if(navigator.clipboard?.writeText)navigator.clipboard.writeText(url).then(()=>toast('Link de convite copiado!'),()=>prompt('Copie o link:',url));
+  else prompt('Copie o link:',url);
 }
 $('join').onclick=async()=>{
-  const c=$('code').value.trim().toUpperCase();if(!c){toast('Digite o código da mesa');return}
-  const r=await sb.from('rooms').select('id').eq('id',c).maybeSingle();
-  if(r.error){toast(r.error.message);return}
-  if(!r.data){toast('Mesa não encontrada');return}
-  start(c);
+  const c=$('code').value.trim().toUpperCase();if(!c){toast('Digite o código da mesa.');return}
+  const result=await runSafe(()=>sb.from('rooms').select('id').eq('id',c).maybeSingle());
+  if(result?.data)startRoom(c);else if(result)toast('Mesa não encontrada.');
 };
 $('create').onclick=async()=>{
-  const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789';let c='';for(let i=0;i<5;i++)c+=A[Math.floor(Math.random()*A.length)];
-  const r=await sb.from('rooms').insert({id:c,gm:uid});
-  if(r.error){toast(r.error.message);return}
-  start(c);
+  const alphabet='ABCDEFGHJKMNPQRSTUVWXYZ23456789';let c='';
+  for(let i=0;i<5;i++)c+=alphabet[Math.floor(Math.random()*alphabet.length)];
+  const result=await runSafe(()=>sb.from('rooms').insert({id:c,gm:uid}));
+  if(result)startRoom(c);
 };
-$('inv').onclick=()=>{
-  const u=location.origin+location.pathname+'?sala='+code;
-  (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Link copiado! Mande para os amigos.'),()=>prompt('Copie o link:',u));
+$('invite').onclick=invite;
+$('leave').onclick=()=>{if(channel)sb.removeChannel(channel);channel=null;code=null;$('app').classList.add('hidden');$('lobby').classList.remove('hidden');};
+$('upload-map').onclick=()=>$('map-file').click();$('change-map').onclick=()=>$('map-file').click();
+$('map-row').onclick=()=>isGM?$('map-file').click():toast('Somente o mestre pode trocar o mapa.');
+$('map-file').onchange=e=>{const f=e.target.files?.[0];if(f)uploadMap(f);e.target.value=''};
+$('add-token').onclick=()=>createToken('npc');$('quick-npc').onclick=()=>createToken('npc');
+$('add-library').onclick=()=>{
+  if(!isGM)return;
+  const name=prompt('Nome do item da biblioteca:');if(!name)return;
+  runSafe(()=>tokenTable().insert({room:code,kind:'lib',name,emoji:'👾',color:'#8270b5',size:8}));
 };
+$('token-search').oninput=renderTokenList;
+$('tool-select').onclick=()=>setTool('select');$('tool-pan').onclick=()=>setTool('pan');
+$('tool-grid').onclick=()=>toggleGrid();$('toggle-grid').onclick=()=>toggleGrid();
+async function toggleGrid(){if(!isGM){toast('Somente o mestre pode alterar a grade.');return}const next=!room.grid;const result=await runSafe(()=>sb.from('rooms').update({grid:next}).eq('id',code));if(result){room.grid=next;updateBoard()}}
+$('toggle-names').onclick=()=>{showNames=!showNames;renderTokens();$('toggle-names').classList.toggle('primary',showNames)};
+$('zoom-in').onclick=()=>setZoom(zoom*1.15);$('zoom-out').onclick=()=>setZoom(zoom/1.15);$('fit').onclick=resetView;
+$('zoom-label').onclick=resetView;
+$('close-properties').onclick=()=>selectToken(null);
+$('clear-chat').onclick=async()=>{if(!isGM)return;if(!confirm('Limpar todas as mensagens da mesa?'))return;await runSafe(()=>sb.from('messages').delete().eq('room',code))};
+$('csend').onclick=()=>sendMessage();$('cin').onkeydown=e=>{if(e.key==='Enter')sendMessage()};
+document.querySelectorAll('[data-die]').forEach(button=>button.onclick=()=>{const result=rollDice(button.dataset.die);$('dice-result').textContent=result.text;sendMessage('/r '+button.dataset.die)});
 (async()=>{
   $('name').value=LS('rpg_name')||'';
   $('code').value=(new URLSearchParams(location.search).get('sala')||LS('rpg_code')||'').toUpperCase();
-  if(SB_URL.startsWith('COLE')){$('msg').textContent='Falta colar a URL e a chave do Supabase no começo do script (veja as instruções).';return}
+  if(!window.supabase){$('msg').textContent='Não foi possível carregar a conexão com o Supabase. Verifique sua internet.';return}
   try{
     sb=supabase.createClient(SB_URL,SB_KEY);
-    let s=(await sb.auth.getSession()).data.session;
-    if(!s){const r=await sb.auth.signInAnonymously();if(r.error)throw r.error;s=r.data.session}
-    uid=s.user.id;
-  }catch(e){$('msg').textContent='Erro ao conectar: '+((e&&e.message)||e)+' (confira se o login anônimo está ativado no Supabase).'}
+    let session=(await sb.auth.getSession()).data.session;
+    if(!session){const auth=await sb.auth.signInAnonymously();if(auth.error)throw auth.error;session=auth.data.session}
+    uid=session.user.id;
+    if($('code').value){/* O usuário ainda confirma ao clicar em Entrar. */}
+  }catch(error){$('msg').textContent='Erro ao conectar: '+(error.message||error)+' (confira se o login anônimo está ativado no Supabase).'}
 })();
-</script></body></html>
+</script>
+</body>
+</html>
