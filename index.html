@@ -58,9 +58,8 @@ input[type=number]{width:64px;padding:6px;border:1px solid var(--line);border-ra
   <label class="btn">Quadrado = <input type="number" id="cell" min="0.1" step="0.1" value="1.5"> m</label><label class="btn">Colunas da grade <input type="number" id="cols" min="5" max="100" value="20"></label><button id="addnpc" class="p">+ NPC</button><button id="liblb">📚 Biblioteca</button>
 </div>
 <div class="bar" id="libp" style="display:none"><div id="libl"></div><button id="newlib" class="p">+ Novo token na biblioteca</button></div></div>
-<div class="bar" id="tb"><button id="mine" class="p">Meu token</button><button id="ruler">📏 Medir</button><label class="btn">🔍 <input id="zoom" type="range" min="100" max="400" step="10" value="100"></label><span id="rd" style="font-size:14px"></span></div>
+<div class="bar" id="tb"><button id="mine" class="p">Meu token</button><button id="ruler">📏 Medir</button><button id="bcb">⚔️ Combate</button><button id="bpj" style="display:none">👥 Jogadores</button><label class="btn">🔍 <input id="zoom" type="range" min="100" max="400" step="10" value="100"></label><span id="rd" style="font-size:14px"></span></div>
 <div id="wrap"><div id="board"><svg id="rsv" style="display:none;position:absolute;inset:0;width:100%;height:100%;pointer-events:none"><line id="rl" stroke="#ffd54a" stroke-width="3" stroke-dasharray="6 4"/></svg></div></div>
-<div class="bar tabs" id="tabs"><button data-t="chat">💬 Chat</button><button data-t="cb">⚔️ Combate</button><button data-t="pj" id="tpj">👥 Jogadores</button><button data-t="gmw" id="tgm">🛠 Mestre</button></div>
 <div id="pj" class="bar" style="display:none"><div id="pjl" style="width:100%"></div></div>
 <div id="cb" class="bar" style="display:none;flex-direction:column;align-items:stretch"><b id="cbs"></b><div id="cbl"></div><div id="cbp" class="bar" style="display:none;padding:0">Bônus <input type="number" id="imod" value="0" min="-20" max="20"><button id="iroll" class="p">🎲 Rolar iniciativa</button></div><div id="cbg" class="bar" style="display:none;padding:0"><button id="c-start" class="p">⚔️ Iniciar combate</button><button id="c-npc">🎲 Rolar NPCs</button><button id="c-go" class="p">▶ Começar</button><button id="c-next" class="p">⏭ Próximo turno</button><button id="c-end">Encerrar</button></div></div>
 <div id="chat"><div id="log"></div><div class="crow"><input type="text" id="cin" placeholder="Mensagem ou /r 1d20+3" maxlength="200"><button id="csend" class="p">Enviar</button><button id="cclr" style="display:none">Limpar</button></div></div>
@@ -156,8 +155,9 @@ function renderChat(){
 }
 
 const myPerm=()=>members.find(x=>x.uid===uid);
-function tab(n){['chat','cb','pj','gmw'].forEach(i=>$(i).style.display=i===n?'':'none');document.querySelectorAll('#tabs button').forEach(b=>b.className=b.dataset.t===n?'p':'')}
-document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>tab(b.dataset.t));
+function tab(){}
+const tg=i=>{$(i).style.display=$(i).style.display==='none'?'':'none'};
+$('bcb').onclick=()=>tg('cb');$('bpj').onclick=()=>tg('pj');
 function renderRoster(){
   const l=$('pjl');l.textContent='';
   if(!members.length){l.textContent='Nenhum jogador entrou ainda.';return}
@@ -177,6 +177,7 @@ const order=()=>ini.slice().sort((a,b)=>b.total-a.total||b.mod-a.mod||String(a.t
 function curTurn(){if(room.combat!=='active')return null;const o=order();return o.length?o[Math.min(room.turn||0,o.length-1)]:null}
 function renderCombat(){
   const o=order(),cur=curTurn(),st=room.combat,l=$('cbl');l.textContent='';
+  if(st!==window._ls){window._ls=st;if(st)$('cb').style.display=''}
   $('cbs').textContent=st==='active'?'Rodada '+(room.round||1)+(cur?' — vez de '+cur.name:''):st==='rolling'?'Rolando iniciativa… jogadores, rolem seus dados!':'Sem combate no momento.';
   o.forEach(e=>{
     const d=document.createElement('div');d.className='chip';d.style.cssText='width:100%;margin-bottom:4px';
@@ -288,7 +289,7 @@ async function load(){
   if(r.data)room=r.data;if(t.data)toks=t.data;if(m.data)msgs=m.data.reverse();members=mb.data||[];ini=ii.data||[];
   isGM=room.gm===uid;
   $('role').textContent=isGM?'Mestre':'Jogador';
-  $('mine').style.display=isGM?'none':'';$('tpj').style.display=$('tgm').style.display=isGM?'':'none';
+  $('mine').style.display=isGM?'none':'';$('bpj').style.display=isGM?'':'none';$('gmw').style.display=isGM?'':'none';
   $('grid').checked=!!room.grid;$('scale').value=room.scale||100;$('ratio').value=room.ratio||'auto';$('cell').value=room.cell_m||1.5;$('cols').value=room.cols||20;
   render();renderLib();renderChat();renderRoster();
 }
@@ -326,7 +327,6 @@ $('inv').onclick=()=>{
   (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Link copiado! Mande para os amigos.'),()=>prompt('Copie o link:',u));
 };
 (async()=>{
-  $('tabs').after($('gmw'));
   $('name').value=LS('rpg_name')||'';
   $('code').value=(new URLSearchParams(location.search).get('sala')||LS('rpg_code')||'').toUpperCase();
   if(SB_URL.startsWith('COLE')){$('msg').textContent='Falta colar a URL e a chave do Supabase no começo do script (veja as instruções).';return}
