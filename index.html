@@ -37,6 +37,7 @@ input[type=text]{padding:8px;border:1px solid var(--line);border-radius:8px;back
 input[type=number]{width:64px;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font-size:16px}
 .tok.turn{filter:drop-shadow(0 0 8px #ffd54a) drop-shadow(0 0 3px #ffd54a)}
 .tok.turn:not(.img){box-shadow:0 0 0 3px #ffd54a,0 0 14px #ffd54a}
+.tok.ghost{opacity:.45}
 .tabs{gap:6px}.tabs button{flex:1}
 @media(max-width:700px){#wrap{max-height:56vh}#log{height:120px}button,.btn,select{padding:10px 12px}.tabs{overflow-x:auto;flex-wrap:nowrap}header h1{font-size:16px}}
 </style></head><body>
@@ -49,13 +50,14 @@ input[type=number]{width:64px;padding:6px;border:1px solid var(--line);border-ra
   <div id="msg" style="font-size:13px;opacity:.8"></div>
 </div>
 <div id="app">
+<div id="wait" style="display:none;padding:20px;text-align:center">⏳ Aguardando o mestre aprovar sua entrada…</div>
 <div id="gmw"><div class="bar" id="gm">
   <label class="btn">🗺️ Trocar mapa<input id="file" type="file" accept="image/*" hidden></label>
   <button id="nomap">Remover mapa</button>
   <label class="btn"><input id="grid" type="checkbox"> Grade</label>
   <label class="btn">Tamanho <input id="scale" type="range" min="100" max="400" step="10" value="100"></label>
   <select id="ratio"><option value="auto">Proporção: da imagem</option><option value="16/10">16:10</option><option value="4/3">4:3</option><option value="1/1">Quadrado</option><option value="9/16">Vertical</option><option value="21/9">Panorâmico</option></select>
-  <label class="btn">Quadrado = <input type="number" id="cell" min="0.1" step="0.1" value="1.5"> m</label><label class="btn">Colunas da grade <input type="number" id="cols" min="5" max="100" value="20"></label><button id="addnpc" class="p">+ NPC</button><button id="liblb">📚 Biblioteca</button>
+  <label class="btn">Quadrado = <input type="number" id="cell" min="0.1" step="0.1" value="1.5"> m</label><label class="btn">Colunas da grade <input type="number" id="cols" min="5" max="100" value="20"></label><label class="btn"><input type="checkbox" id="closed"> Sala fechada (aprovar novos)</label><button id="addnpc" class="p">+ NPC</button><button id="liblb">📚 Biblioteca</button>
 </div>
 <div class="bar" id="libp" style="display:none"><div id="libl"></div><button id="newlib" class="p">+ Novo token na biblioteca</button></div></div>
 <div class="bar" id="tb"><button id="mine" class="p">Meu token</button><button id="ruler">📏 Medir</button><button id="bcb">⚔️ Combate</button><button id="bpj" style="display:none">👥 Jogadores</button><label class="btn">🔍 <input id="zoom" type="range" min="100" max="400" step="10" value="100"></label><span id="rd" style="font-size:14px"></span></div>
@@ -64,7 +66,7 @@ input[type=number]{width:64px;padding:6px;border:1px solid var(--line);border-ra
 <div id="cb" class="bar" style="display:none;flex-direction:column;align-items:stretch"><b id="cbs"></b><div id="cbl"></div><div id="cbp" class="bar" style="display:none;padding:0">Bônus <input type="number" id="imod" value="0" min="-20" max="20"><button id="iroll" class="p">🎲 Rolar iniciativa</button></div><div id="cbg" class="bar" style="display:none;padding:0"><button id="c-start" class="p">⚔️ Iniciar combate</button><button id="c-npc">🎲 Rolar NPCs</button><button id="c-go" class="p">▶ Começar</button><button id="c-next" class="p">⏭ Próximo turno</button><button id="c-end">Encerrar</button></div></div>
 <div id="chat"><div id="log"></div><div class="crow"><input type="text" id="cin" placeholder="Mensagem ou /r 1d20+3" maxlength="200"><button id="csend" class="p">Enviar</button><button id="cclr" style="display:none">Limpar</button></div></div>
 <div id="ed">
-  <div class="row"><span class="mini" id="f-prev"></span><label class="btn">📷 Foto (PNG sem fundo)<input id="f-file" type="file" accept="image/*" hidden></label><button id="f-noimg">Sem foto</button><input type="text" id="f-name" placeholder="Nome" maxlength="20"><input type="text" id="f-emoji" placeholder="🙂" maxlength="4" style="width:64px"><input type="color" id="f-color"><label>Tamanho <input type="range" id="f-size" min="3" max="30" value="8"></label></div>
+  <div class="row"><span class="mini" id="f-prev"></span><label class="btn">📷 Foto (PNG sem fundo)<input id="f-file" type="file" accept="image/*" hidden></label><button id="f-noimg">Sem foto</button><input type="text" id="f-name" placeholder="Nome" maxlength="20"><input type="text" id="f-emoji" placeholder="🙂" maxlength="4" style="width:64px"><input type="color" id="f-color"><label>Tamanho <input type="range" id="f-size" min="3" max="30" value="8"></label><label id="f-hl" style="display:none"><input type="checkbox" id="f-hid"> Oculto dos jogadores</label></div>
   <div class="row"><button class="p" id="e-save">Salvar</button><button id="e-lib">Salvar na biblioteca</button><button id="e-del">Excluir</button><button id="e-x">Fechar</button></div>
 </div>
 </div>
@@ -105,7 +107,7 @@ function render(){
   toks.filter(t=>t.kind!=='lib').forEach(t=>{
     const can=isGM||(t.kind==='pl'&&t.owner===uid);
     const el=document.createElement('div');
-    el.className='tok'+(can?' can':'')+(cur&&cur.token===t.id?' turn':'');
+    el.className='tok'+(can?' can':'')+(cur&&cur.token===t.id?' turn':'')+(t.hidden?' ghost':'');
     el.style.cssText='--s:'+(t.size||8)+';left:'+t.x+'%;top:'+t.y+'%';
     paint(el,t);
     if(t.img){el.className+=' img';const im=new Image();im.src=t.img;im.draggable=false;el.appendChild(im)}
@@ -165,7 +167,7 @@ function renderRoster(){
     const d=document.createElement('div');d.className='chip';d.style.cssText='width:100%;margin-bottom:6px;flex-wrap:wrap';
     const nm=document.createElement('b');nm.textContent=(online.includes(m.uid)?'🟢 ':'⚪ ')+(m.name||'Jogador');
     d.appendChild(nm);
-    [['Mover','can_move'],['Chat','can_chat']].forEach(([lab,key])=>{
+    [['Mover','can_move'],['Chat','can_chat'],['Editar token','can_edit'],['Rolar dados','can_roll'],['Aprovado','approved']].forEach(([lab,key])=>{
       const w=document.createElement('label'),c=document.createElement('input');c.type='checkbox';c.checked=m[key];
       c.onchange=()=>safe(()=>sb.from('members').update({[key]:c.checked}).eq('room',code).eq('uid',m.uid));
       w.style.marginLeft='10px';w.append(c,' '+lab);d.appendChild(w);
@@ -194,11 +196,12 @@ function renderCombat(){
   $('c-end').style.display=st?'':'none';
 }
 $('c-start').onclick=()=>safe(async()=>{await sb.from('initiative').delete().eq('room',code);ini=[];setRoom({combat:'rolling',turn:0,round:1})});
-$('c-npc').onclick=()=>safe(()=>Promise.all(toks.filter(t=>t.kind==='npc'&&!ini.some(e=>e.token===t.id)).map(t=>sb.rpc('roll_initiative',{r:code,t:t.id,m:0}))));
+$('c-npc').onclick=()=>safe(()=>Promise.all(toks.filter(t=>t.kind==='npc'&&!t.hidden&&!ini.some(e=>e.token===t.id)).map(t=>sb.rpc('roll_initiative',{r:code,t:t.id,m:0}))));
 $('c-go').onclick=()=>ini.length?setRoom({combat:'active',turn:0,round:1}):toast('Ninguém rolou iniciativa ainda');
 $('c-next').onclick=()=>{const n=order().length||1,t=((room.turn||0)+1)%n;setRoom({turn:t,round:(room.round||1)+(t===0?1:0)})};
 $('c-end').onclick=()=>safe(async()=>{await sb.from('initiative').delete().eq('room',code);ini=[];setRoom({combat:null,turn:0,round:1})});
 $('iroll').onclick=()=>{const m=toks.find(t=>t.kind==='pl'&&t.owner===uid);if(!m){toast('Crie seu token primeiro');return}safe(()=>sb.rpc('roll_initiative',{r:code,t:m.id,m:+$('imod').value||0}))};
+$('closed').onchange=e=>setRoom({closed:e.target.checked});
 $('cell').onchange=e=>setRoom({cell_m:+e.target.value||1.5});
 $('cols').onchange=e=>setRoom({cols:Math.max(5,Math.min(100,+e.target.value||20))});
 $('zoom').oninput=render;
@@ -224,10 +227,11 @@ function openEd(kind,id){
   $('f-size').value=t.size||8;
   $('e-del').style.display=id?'':'none';
   $('e-lib').style.display=(isGM&&kind==='npc')?'':'none';
+  $('f-hid').checked=!!t.hidden;$('f-hl').style.display=(isGM&&kind==='npc')?'':'none';
   prev();$('ed').classList.add('on');
 }
 function closeEd(){$('ed').classList.remove('on');ed=null}
-function fields(){return{name:$('f-name').value.trim()||'Sem nome',emoji:$('f-emoji').value.trim(),color:$('f-color').value,size:isGM?+$('f-size').value:Math.min(+$('f-size').value,12),img:pend}}
+function fields(){return{name:$('f-name').value.trim()||'Sem nome',emoji:$('f-emoji').value.trim(),color:$('f-color').value,size:isGM?+$('f-size').value:Math.min(+$('f-size').value,12),img:pend,hidden:!!(isGM&&ed&&ed.kind==='npc'&&$('f-hid').checked)}}
 ['f-name','f-emoji','f-color'].forEach(i=>$(i).oninput=prev);
 $('f-noimg').onclick=()=>{pend='';prev()};
 $('f-file').onchange=async e=>{
@@ -269,7 +273,7 @@ function send(){
   const inp=$('cin'),s=inp.value.trim();if(!s)return;
   if(!isGM&&myPerm()&&!myPerm().can_chat){toast('O mestre silenciou você no chat');return}
   let text=s,isRoll=false;const rm=s.match(/^\/r(?:oll)?\s+(.+)$/i);
-  if(rm){const r=roll(rm[1].trim());if(!r){toast('Exemplo: /r 1d20+3');return}text=r;isRoll=true}
+  if(rm){if(!isGM&&myPerm()&&!myPerm().can_roll){toast('O mestre bloqueou suas rolagens');return}const r=roll(rm[1].trim());if(!r){toast('Exemplo: /r 1d20+3');return}text=r;isRoll=true}
   inp.value='';
   const mine=toks.find(t=>t.kind==='pl'&&t.owner===uid);
   const name=isGM?'Mestre':(mine&&mine.name)||myName||'Jogador';
@@ -290,7 +294,8 @@ async function load(){
   isGM=room.gm===uid;
   $('role').textContent=isGM?'Mestre':'Jogador';
   $('mine').style.display=isGM?'none':'';$('bpj').style.display=isGM?'':'none';$('gmw').style.display=isGM?'':'none';
-  $('grid').checked=!!room.grid;$('scale').value=room.scale||100;$('ratio').value=room.ratio||'auto';$('cell').value=room.cell_m||1.5;$('cols').value=room.cols||20;
+  $('grid').checked=!!room.grid;$('scale').value=room.scale||100;$('ratio').value=room.ratio||'auto';$('cell').value=room.cell_m||1.5;$('cols').value=room.cols||20;$('closed').checked=!!room.closed;
+  {const pm=myPerm();$('wait').style.display=(!isGM&&pm&&!pm.approved)?'block':'none'}
   render();renderLib();renderChat();renderRoster();
 }
 const sched=()=>{clearTimeout(timer);timer=setTimeout(load,120)};
