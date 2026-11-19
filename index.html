@@ -65,8 +65,167 @@ body{height:100dvh}
 #nav small{font-size:.7em;opacity:.85}
 .dice{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 @media(max-width:700px){.drawer,.drawer.r{top:auto;bottom:0;left:0;right:0;width:100%;height:62%;border:0;border-top:1px solid var(--line);border-radius:16px 16px 0 0;transform:translateY(102%)}.drawer.open{transform:none}.pop{top:auto;bottom:74px;left:8px;right:8px;width:auto}#ed{max-height:70vh}}
+
+/* ===== REDESIGN 2026: interface de mesa, mobile-first ===== */
+:root{
+  --bg:#0b1018;--fg:#edf2fb;--card:#151e2b;--line:#283649;
+  --ac:#8b5cf6;--rad:16px;--board:#111827;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:
+    radial-gradient(ellipse at 12% -12%,#35245e 0,transparent 36%),
+    radial-gradient(ellipse at 100% 0%,#12394a 0,transparent 30%),
+    var(--bg);
+  color:var(--fg);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  letter-spacing:.01em;
+}
+button,.btn,select{
+  border:1px solid #34445a;background:#1b2939;color:#eaf1fc;border-radius:12px;
+  padding:.65em .95em;font-weight:650;min-height:40px;
+  box-shadow:0 2px 8px #0002;transition:background .18s,border-color .18s,transform .12s;
+}
+button:hover,.btn:hover,select:hover{background:#26384d;border-color:#526783}
+button:active{transform:scale(.97)}
+button.p{background:linear-gradient(135deg,#8b5cf6,#6d45d8);color:white;border:0;box-shadow:0 5px 16px #7046d955}
+input[type=text],input[type=number],textarea,select{
+  background:#0d1622;color:var(--fg);border:1px solid #34445a;border-radius:11px;
+}
+input:focus,textarea:focus,select:focus{outline:2px solid #8b5cf688;outline-offset:1px}
+input[type=checkbox],input[type=range]{accent-color:#9b7bff}
+#top{
+  min-height:60px;padding:8px 16px;padding-top:max(8px,env(safe-area-inset-top));
+  background:#0c1420eF;border-bottom:1px solid #26364a;backdrop-filter:blur(18px);
+  gap:9px;z-index:5;
+}
+#rtitle{font-size:1rem;letter-spacing:.02em;max-width:38vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.role{background:#31245b;color:#d9caff;border:1px solid #6545a5;padding:4px 10px;font-weight:750}
+#top button{min-width:40px;padding:.55em .7em}
+#lobby{
+  max-width:560px;width:min(100%,560px);padding:clamp(20px,5vw,36px);
+  margin:auto;gap:13px;align-self:center;
+}
+#lobby h2{font-size:clamp(1.8rem,7vw,2.6rem);letter-spacing:-.05em;margin:10px 0 4px!important}
+#lobby h2:after{content:"";display:block;width:54px;height:4px;border-radius:8px;background:linear-gradient(90deg,#a78bfa,#22d3ee);margin-top:12px}
+#lobby>b{font-size:.83rem;text-transform:uppercase;letter-spacing:.12em;color:#9eacc0;margin-top:12px}
+#lobby>input,#lobby .row input{width:100%;min-height:48px;padding:12px 14px}
+#mylist{display:grid;gap:8px}
+#mylist .row{background:#151f2d;border:1px solid #29394e;border-radius:15px;padding:8px}
+#mylist button{min-height:44px}
+#lobby>div[style*="font-size"]{line-height:1.6;color:#9eacc0!important}
+#stage{background:#080d14}
+#wrap{
+  background:
+    radial-gradient(#34445a 1px,transparent 1px);
+  background-size:22px 22px;
+  background-color:#0b121c;
+}
+#board{border:1px solid #506078;border-radius:8px;box-shadow:0 18px 60px #0008}
+#nav{
+  gap:8px;padding:8px 10px;padding-bottom:max(8px,env(safe-area-inset-bottom));
+  background:#0c1420f5;border-top:1px solid #26364a;backdrop-filter:blur(18px);
+}
+#nav button{
+  flex:1;max-width:none;min-height:54px;padding:7px 3px;border-radius:14px;
+  background:#172334;border:1px solid #2b3b50;font-size:1.05rem;
+}
+#nav button small{display:block;font-size:.67rem;letter-spacing:.02em;color:#b9c7d9;margin-top:2px}
+#nav button.p{background:#6043b8;border-color:#9b7bff}
+.drawer{
+  background:#111b29f7;border-color:#2b3d53;box-shadow:0 18px 60px #0008;
+  padding:16px;backdrop-filter:blur(22px);
+}
+.drawer .sec{padding:12px;background:#172334;border:1px solid #293c52;border-radius:15px;margin-bottom:12px}
+.drawer b,summary{color:#f0f4fb}
+summary{padding:10px 2px}
+details{background:#172334;border:1px solid #293c52;border-radius:14px;padding:0 12px;margin-bottom:10px}
+details[open]{padding-bottom:12px}
+.chip{background:#0e1926;border-color:#2c4057;border-radius:12px;padding:8px 10px;color:#e8eff9}
+#log{height:min(34dvh,300px);background:#0b1420;border-color:#2b3d53;border-radius:13px;line-height:1.55}
+#log>div{padding:4px 2px;border-bottom:1px solid #1b2a3c}
+#log .roll{color:#c4a8ff;font-weight:650}
+#rd{top:12px;background:#211a39;border:1px solid #8b6be0;color:#eee5ff;padding:7px 14px;font-weight:700;box-shadow:0 5px 20px #0007}
+.pop{
+  top:68px;right:12px;background:#121e2d;border:1px solid #354960;
+  box-shadow:0 18px 55px #000b;border-radius:18px;padding:16px;
+}
+.pop b{font-size:1rem}
+.dice{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.dice button{min-height:46px;background:#202d43}
+#ed{
+  background:#111b29f8;border-color:#3a4c62;box-shadow:0 -18px 60px #0009;
+  border-radius:20px 20px 0 0;padding:18px;padding-bottom:max(18px,env(safe-area-inset-bottom));
+}
+#ed .row{gap:9px}
+#ed input[type=text],#ed input[type=number]{min-height:42px}
+#toast{top:calc(64px + env(safe-area-inset-top));background:#e8eefa;color:#111827;font-weight:700;border-radius:12px;box-shadow:0 8px 25px #0006}
+#wait{background:#0d1622;color:#e8eff9}
+#vis{max-height:75dvh;overflow:auto}
+#vis .row{justify-content:space-between}
+#vis select{max-width:150px}
+#vis input[type=range]{max-width:130px}
+#fitmap{font-size:1.25rem;line-height:1}
+
+/* Tablet / desktop: drawers laterais e canvas com respiro. */
+@media(min-width:701px){
+  #top{padding-left:22px;padding-right:22px}
+  #rtitle{font-size:1.08rem;max-width:none}
+  .drawer{top:12px;bottom:12px;left:12px;width:min(360px,34vw);border:1px solid #2b3d53;border-radius:18px}
+  .drawer.r{left:auto;right:12px}
+  #nav{display:none!important}
+  #board{border-radius:12px}
+}
+/* Celular em pé: alvos grandes, painéis como bottom sheets e mapa utilizável. */
+@media(max-width:700px){
+  body{font-size:14px}
+  #top{min-height:54px;padding-left:10px;padding-right:10px;gap:6px}
+  #rtitle{font-size:.9rem;max-width:31vw}
+  #top button{min-width:38px;min-height:38px;padding:5px}
+  #srv{max-width:92px!important;font-size:.8rem}
+  #stage{min-height:0}
+  #wrap{inset:0 0 0 0;align-items:center}
+  #board{max-width:none;border-radius:5px}
+  .drawer,.drawer.r{
+    left:0;right:0;top:auto;bottom:0;width:100%;height:min(76dvh,680px);
+    max-height:calc(100dvh - 112px);border:1px solid #35475e;border-bottom:0;
+    border-radius:22px 22px 0 0;padding:18px 14px calc(84px + env(safe-area-inset-bottom));
+    transform:translateY(105%);box-shadow:0 -20px 60px #0009;
+  }
+  .drawer:before{content:"";display:block;width:42px;height:4px;border-radius:10px;background:#53647a;margin:-7px auto 14px;opacity:.8}
+  .drawer.open{transform:translateY(0)}
+  #nav{min-height:68px}
+  #nav button{min-height:52px}
+  #nav small{font-size:.65rem}
+  #log{height:26dvh;min-height:130px}
+  #ed{max-height:76dvh;border-radius:22px 22px 0 0}
+  #ed .row{align-items:center}
+  #ed .row:first-child{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  #ed .row:first-child>*{min-width:0}
+  #ed .row:first-child input[type=text]{width:100%}
+  #ed .row:last-child{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  #ed .row:last-child button{width:100%}
+  .pop{top:auto;bottom:calc(76px + env(safe-area-inset-bottom));left:10px;right:10px;width:auto;max-height:65dvh;overflow:auto}
+  #vis{bottom:calc(76px + env(safe-area-inset-bottom))}
+  #dicep{bottom:calc(76px + env(safe-area-inset-bottom))}
+  #rd{top:8px;font-size:.78rem}
+  .tok .n{font-size:10px}
+}
+/* Celular deitado: aproveita a largura sem esmagar o mapa. */
+@media(max-height:500px) and (orientation:landscape){
+  #top{min-height:44px;padding-top:4px;padding-bottom:4px}
+  #nav{display:none!important}
+  .drawer,.drawer.r{top:48px;bottom:8px;height:auto;width:min(310px,42vw);padding:12px}
+  #log{height:22dvh}
+  #ed{max-height:82dvh}
+  .pop{top:48px;bottom:auto;max-height:80dvh}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
+}
+
 </style></head><body>
-<header id="top"><button id="bl" title="Ferramentas" style="display:none">☰</button><b id="rtitle">🎲 Mesa de RPG</b><span class="role" id="role"></span><select id="srv" style="display:none;max-width:140px"></select><span style="flex:1"></span><button id="bv" title="Visual">🎨</button><button id="inv" style="display:none">🔗 Convidar</button><button id="br" style="display:none" title="Chat e combate">💬</button><button id="home" style="display:none" title="Minhas mesas">🏠</button></header>
+<header id="top"><button id="bl" title="Ferramentas" style="display:none">☰</button><b id="rtitle">🎲 Mesa de RPG</b><span class="role" id="role"></span><select id="srv" style="display:none;max-width:140px"></select><span style="flex:1"></span><button id="fitmap" title="Enquadrar mapa" aria-label="Enquadrar mapa">⌗</button><button id="bv" title="Visual">🎨</button><button id="inv" style="display:none">🔗 Convidar</button><button id="br" style="display:none" title="Chat e combate">💬</button><button id="home" style="display:none" title="Minhas mesas">🏠</button></header>
 
 <div id="lobby">
   <h2 style="margin:0">🎲 Mesa de RPG</h2>
@@ -469,6 +628,12 @@ $('create').onclick=async()=>{
   myName=n;LS('rpg_name',n);await refreshList();start(c);
 };
 $('home').onclick=leave;
+$('fitmap').onclick=()=>{
+  $('zoom').value=100;
+  render();
+  requestAnimationFrame(()=>{wr.scrollLeft=(wr.scrollWidth-wr.clientWidth)/2;wr.scrollTop=(wr.scrollHeight-wr.clientHeight)/2});
+  toast('Mapa enquadrado');
+};
 $('srv').onchange=e=>{const c=e.target.value;if(c&&c!==code){leave();enter(c)}};
 $('inv').onclick=()=>{
   const u=location.origin+location.pathname+'?sala='+code;
@@ -484,6 +649,14 @@ function setPing(v){pinging=v;$('n-ping').className=v?'p':'';if(v&&ruling)$('rul
 function showPing(x,y,c){const d=document.createElement('div');d.className='ping';d.style.left=x+'%';d.style.top=y+'%';d.style.borderColor=c||'#ffd54a';$('board').appendChild(d);setTimeout(()=>d.remove(),1700)}
 async function lock(){try{if('wakeLock' in navigator&&!wl){wl=await navigator.wakeLock.request('screen');wl.addEventListener('release',()=>wl=null)}}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&code)lock()});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    ['dl','dr','dicep','vis'].forEach(id=>$(id).classList.remove('open','on'));
+    closeEd();setPing(false);
+  }
+  if((e.key==='+'||e.key==='=')&&code)setZoom(+$('zoom').value*1.15);
+  if(e.key==='-'&&code)setZoom(+$('zoom').value/1.15);
+});
 const wr=$('wrap'),ptrs=new Map();let pz=null,pan=null;
 wr.style.touchAction='none';
 function setZoom(z){z=Math.max(50,Math.min(400,z));const cx=(wr.scrollLeft+wr.clientWidth/2)/wr.scrollWidth,cy=(wr.scrollTop+wr.clientHeight/2)/wr.scrollHeight;$('zoom').value=z;render();wr.scrollLeft=cx*wr.scrollWidth-wr.clientWidth/2;wr.scrollTop=cy*wr.scrollHeight-wr.clientHeight/2}
