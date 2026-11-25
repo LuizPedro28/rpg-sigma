@@ -354,6 +354,14 @@ details>summary::before{content:"›";display:inline-block;transition:transform 
 #nav{box-shadow:0 -8px 24px rgba(0,0,0,.25)}
 button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 @media(hover:none){button:hover,.btn:hover{transform:none}}
+.tok.obj{border-radius:10px}.tok.obj.img{border-radius:0}
+.tok.obj:not(.can){cursor:pointer}
+#view{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);padding:16px}
+#view.on{display:flex;animation:paneIn .25s ease both}
+#view .vb{width:min(560px,100%);max-height:85dvh;overflow:auto;background:var(--camp-panel,#111b29);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 24px 60px #000a}
+#view h3{margin:0 0 10px}#view img{max-width:100%;max-height:40dvh;border-radius:12px;margin-bottom:10px}
+#view p{white-space:pre-wrap;line-height:1.5;margin:0 0 14px}
+#ed textarea{width:100%;resize:vertical;border-radius:10px;padding:8px}
 /* ===== Menus em abas e sanfonas animadas ===== */
 .tabs{position:sticky;top:-8px;z-index:5;display:flex;gap:2px;padding:4px;margin:0 0 12px;background:rgba(0,0,0,.34);border:1px solid var(--line);border-radius:16px;backdrop-filter:blur(10px)}
 .tabs .ind{position:absolute;left:0;top:4px;bottom:4px;width:0;border-radius:12px;background:linear-gradient(135deg,var(--ac),var(--camp-ac2,var(--ac)));box-shadow:0 6px 18px color-mix(in srgb,var(--ac) 45%,transparent);transition:transform .4s cubic-bezier(.34,1.4,.5,1),width .3s ease;z-index:0}
@@ -404,7 +412,7 @@ button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px soli
   <div id="wrap"><div id="board"><svg id="rsv" style="display:none;position:absolute;inset:0;width:100%;height:100%;pointer-events:none"><line id="rl" stroke="#ffd54a" stroke-width="3" stroke-dasharray="6 4"/></svg></div></div>
   <div id="rd"></div>
   <aside id="dl" class="drawer">
-    <div class="sec"><div class="row"><button id="mine" class="p">Meu token</button><button id="ruler">📏 Medir</button></div><label class="row">🔍 Zoom <input id="zoom" type="range" min="50" max="400" step="1" value="100"></label></div>
+    <div class="sec"><div class="row"><button id="mine" class="p">Meu token</button><button id="sheetb" style="display:none">📄 Minha ficha</button><button id="ruler">📏 Medir</button></div><label class="row">🔍 Zoom <input id="zoom" type="range" min="50" max="400" step="1" value="100"></label></div>
     <div class="sec"><b>📝 Minhas anotações</b><textarea id="notes" rows="4" placeholder="Só você vê (fica neste aparelho)" style="width:100%;padding:.5em;border:1px solid var(--line);border-radius:var(--rad);background:var(--bg);color:var(--fg);font:inherit;font-size:max(16px,1em)"></textarea></div>
     <div id="gmw" style="display:none">
       <div id="gm">
@@ -413,7 +421,7 @@ button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px soli
 <div class="row"><label class="btn"><input id="grid" type="checkbox"> Grade</label></div>
 <label class="row">Tamanho do mapa <input id="scale" type="range" min="100" max="400" step="10" value="100"></label>
 <select id="ratio"><option value="auto">Proporção: da imagem</option><option value="16/10">16:10</option><option value="4/3">4:3</option><option value="1/1">Quadrado</option><option value="9/16">Vertical</option><option value="21/9">Panorâmico</option></select>
-<div class="row"><label>Quadrado = <input type="number" id="cell" min="0.1" step="0.1" value="1.5"> m</label><label>Colunas <input type="number" id="cols" min="5" max="100" value="20"></label></div></div></details>
+<div class="row"><label>Largura do mapa <input type="number" id="mapw" min="0.01" step="any" style="width:6em"></label><select id="unit"><option>m</option><option>cm</option><option>km</option><option>ft</option><option>in</option><option>yd</option><option>mi</option><option value="__o">Outra…</option></select></div><div class="row"><label>Cada quadrado = <input type="number" id="cell" min="0.001" step="any" value="1.5" style="width:5.5em"> <b id="unitl">m</b></label></div><input type="number" id="cols" hidden></div></details>
 <details class="acc"><summary>🎛 Controle da mesa</summary><div class="accb">
 <div class="row"><label class="btn"><input type="checkbox" id="closed"> 🔒 Sala fechada</label><label class="btn"><input type="checkbox" id="frozen"> ❄️ Congelar movimento</label><label class="btn"><input type="checkbox" id="muted"> 🔇 Silenciar chat</label></div>
 <div class="row"><input type="text" id="ann" placeholder="Anúncio para todos" maxlength="120" style="flex:1"><button id="annb">📢</button></div></div></details>
@@ -445,7 +453,7 @@ button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px soli
   <aside id="dr" class="drawer r">
     <details id="dcb" open><summary>⚔️ Combate</summary><div id="cb"><b id="cbs"></b>
       <div id="attack-tools" class="attack-tools" style="display:none">
-        <label>Alcance do ataque <span><input id="attack-range" type="number" min="0.5" max="100" step="0.5" value="1.5"> quadrados</span></label>
+        <label>Alcance do ataque <span><input id="attack-range" type="number" min="0.01" step="any" value="1.5"> <b id="au">m</b></span></label>
         <small>O círculo mostra o alcance do personagem da vez. Distâncias calculadas pela grade.</small>
         <div id="attack-status"></div>
       </div>
@@ -472,8 +480,9 @@ button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px soli
   <label class="row">Tamanho da interface <input type="range" id="v-ui" min="0.8" max="1.4" step="0.05" value="1"></label>
   <label class="row">Arredondamento <input type="range" id="v-rad" min="0" max="20" step="1" value="10"></label>
   <button id="v-reset">Restaurar padrão</button></div>
+<div id="view"><div class="vb"><h3 id="v-ti"></h3><img id="v-im" alt=""><p id="v-tx"></p><div class="row"><button id="v-ed">✎ Editar</button><button class="p" id="v-x">Fechar</button></div></div></div>
 <div id="ed">
-  <div class="row"><span class="mini" id="f-prev"></span><label class="btn">📷 Foto (PNG sem fundo)<input id="f-file" type="file" accept="image/*" hidden></label><button id="f-noimg">Sem foto</button><input type="text" id="f-name" placeholder="Nome" maxlength="20"><input type="text" id="f-emoji" placeholder="🙂" maxlength="4" style="width:4.5em"><input type="color" id="f-color"><label>Tamanho <input type="range" id="f-size" min="3" max="30" value="8"></label><label>❤️ <input type="number" id="f-hp" min="0" placeholder="HP"> / <input type="number" id="f-hpm" min="0" placeholder="máx"></label><label id="f-hl" style="display:none"><input type="checkbox" id="f-hid"> Oculto dos jogadores</label></div>
+  <div class="row"><span class="mini" id="f-prev"></span><label class="btn">📷 Foto (PNG sem fundo)<input id="f-file" type="file" accept="image/*" hidden></label><button id="f-noimg">Sem foto</button><input type="text" id="f-name" placeholder="Nome" maxlength="20"><input type="text" id="f-emoji" placeholder="🙂" maxlength="4" style="width:4.5em"><input type="color" id="f-color"><select id="f-cat"><option value="npc">🧙 Personagem / NPC</option><option value="obj">📦 Objeto</option><option value="doc">📄 Documento</option></select><label>Tamanho <input type="number" id="f-sizeu" min="0.01" step="any" style="width:5.5em"> <b id="f-unit">m</b></label><input type="range" id="f-size" min="3" max="30" value="8" hidden><label>❤️ <input type="number" id="f-hp" min="0" placeholder="HP"> / <input type="number" id="f-hpm" min="0" placeholder="máx"></label><input type="text" id="f-sheet" placeholder="Link da ficha (Cris · Ordem Paranormal)" style="display:none;flex:1 1 100%"><textarea id="f-note" placeholder="Texto do documento / descrição do objeto (todos veem ao tocar)" rows="4" style="display:none;flex:1 1 100%"></textarea><label id="f-hl" style="display:none"><input type="checkbox" id="f-hid"> Oculto dos jogadores</label></div>
   <div class="row"><button class="p" id="e-save">Salvar</button><button id="e-lib">Salvar na biblioteca</button><button id="e-del">Excluir</button><button id="e-x">Fechar</button></div>
 </div>
 <div id="toast"></div>
@@ -489,7 +498,7 @@ async function safe(fn){try{const r=await fn();if(r&&r.error)throw r.error;retur
 const T=()=>sb.from('tokens');
 const myPerm=()=>members.find(x=>x.uid===uid);
 const setRoom=p=>{Object.assign(room,p);render();safe(()=>sb.from('rooms').update(p).eq('id',code))};
-function paint(el,t){el.style.backgroundColor=t.img?'transparent':(t.color||'#888');el.style.backgroundImage=t.img?'url("'+t.img+'")':'none';el.textContent=t.img?'':(t.emoji||(t.name||'?').slice(0,1).toUpperCase())}
+function paint(el,t){el.style.backgroundColor=t.img?'transparent':(t.color||'#888');el.style.backgroundImage=t.img?'url("'+t.img+'")':'none';el.textContent=t.img?'':(t.emoji||(t.cat==='doc'?'📄':t.cat==='obj'?'📦':(t.name||'?').slice(0,1).toUpperCase()))}
 function shrink(f,n){return new Promise((ok,no)=>{const im=new Image(),u=URL.createObjectURL(f);im.onload=()=>{const k=Math.min(1,n/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?ok(b):no(new Error('imagem inválida')),'image/webp',.9)};im.onerror=()=>no(new Error('imagem inválida'));im.src=u})}
 async function upload(blob,ext,type){
   const path=code+'/'+uid.slice(0,8)+'-'+Date.now()+'.'+ext;
@@ -552,11 +561,12 @@ function mkTok(id){
   };
   el.onpointerup=async()=>{
     const d=drag;if(!d||d.el!==el)return;drag=null;el.classList.remove('dr');
-    if(!d.moved){openEd(d.t.kind,d.t.id);return}
+    if(!d.moved){isObj(d.t)?openView(d.t):openEd(d.t.kind,d.t.id);return}
     d.t.x=d.x;d.t.y=d.y;
     if(!await safe(()=>T().update({x:d.x,y:d.y}).eq('id',d.t.id)))await load();
     render();
   };
+  el.onclick=()=>{const t=toks.find(x=>x.id===id);if(t&&!el._can&&isObj(t)&&!ruling)openView(t)};
   el.onpointercancel=el.onlostpointercapture=()=>{if(drag&&drag.el===el){drag=null;el.classList.remove('dr');load()}};
   return el;
 }
@@ -574,7 +584,7 @@ function render(){
   b.style.aspectRatio=rs;
   const fw=Math.min(wp.clientWidth,wp.clientHeight*rr)||600;
   b.style.width=Math.round(fw*(room.scale||100)/100*$('zoom').value/100)+'px';
-  b.style.setProperty('--gs',(100/(room.cols||20))+'cqw');
+  b.style.setProperty('--gs',(100/gcols())+'cqw');
 
   // O alcance usa pixels quadrados com base no tamanho real da célula.
   let rangeLayer=$('attack-range-layer');
@@ -582,9 +592,9 @@ function render(){
   rangeLayer.textContent='';activeRangeNode=null;activeRangeToken=null;
   const activeTurn=curTurn(),activeActor=activeTurn&&toks.find(t=>t.id===activeTurn.token);
   if(room.combat==='active'&&canSeeRange(activeActor)){
-    const range=Math.max(.5,Math.min(100,Number($('attack-range')?.value)||1.5));
-    const cols=Math.max(1,Number(room.cols)||20);
-    const diameter=Math.max(2,2*range*(b.clientWidth/cols));
+    const range=Math.max(.01,Math.min(100000,Number($('attack-range')?.value)||1.5));
+    const cols=gcols();
+    const diameter=Math.max(2,2*range*(b.clientWidth/mapW()));
     const circle=document.createElement('div');
     circle.className='attack-radius';
     circle.style.left=activeActor.x+'%';circle.style.top=activeActor.y+'%';
@@ -598,23 +608,32 @@ function render(){
     seen[t.id]=1;
     let el=els[t.id];if(!el){el=els[t.id]=mkTok(t.id);b.appendChild(el)}
     const can=isGM||(t.kind==='pl'&&t.owner===uid),isCur=!!(cur&&cur.token===t.id);
-    const sig=[t.name,t.emoji,t.color,t.img,t.size,t.hidden,can,isCur,t.hp,t.hp_max].join('|');
+    const sig=[t.name,t.emoji,t.color,t.img,t.size,t.size_u,t.cat,mapW(),t.hidden,can,isCur,t.hp,t.hp_max].join('|');
     if(el._sig!==sig){
       el._sig=sig;el._can=can;
-      el.className='tok'+(can?' can':'')+(isCur?' turn':'')+(t.hidden?' ghost':'')+(t.img?' img':'');
-      el.style.setProperty('--s',t.size||8);paint(el,t);
+      el.className='tok'+(can?' can':'')+(isCur?' turn':'')+(t.hidden?' ghost':'')+(t.img?' img':'')+(isObj(t)?' obj':'');
+      el.style.setProperty('--s',tokPct(t));paint(el,t);
       if(t.img){const im=new Image();im.src=t.img;im.draggable=false;el.appendChild(im)}
       const n=document.createElement('span');n.className='n';n.textContent=t.name||'';el.appendChild(n);
-      if(t.hp_max>0){const h=document.createElement('div');h.className='hp';const i=document.createElement('i');const f=Math.max(0,Math.min(1,t.hp/t.hp_max));i.style.width=(f*100)+'%';i.style.background=f<.3?'#e53935':'#4caf50';h.appendChild(i);el.appendChild(h)}
+      if(!isObj(t)&&t.hp_max>0){const h=document.createElement('div');h.className='hp';const i=document.createElement('i');const f=Math.max(0,Math.min(1,t.hp/t.hp_max));i.style.width=(f*100)+'%';i.style.background=f<.3?'#e53935':'#4caf50';h.appendChild(i);el.appendChild(h)}
     }
     el.style.left=t.x+'%';el.style.top=t.y+'%';
   });
   for(const id in els)if(!seen[id]){els[id].remove();delete els[id]}
   renderMapMasks();
   const mine=toks.find(t=>t.kind==='pl'&&t.owner===uid);
-  $('mine').textContent=mine?'Editar meu token':'Criar meu token';
+  $('mine').textContent=mine?'Editar meu token':'Criar meu token';$('sheetb').style.display=(!isGM&&mine&&mine.sheet_url)?'':'none';$('sheetb').onclick=()=>mine&&openLink(mine.sheet_url);
   if(!isGM&&!asked&&!mine&&!$('wait').style.display.startsWith('f')){asked=true;openEd('pl',null)}
 }
+const unitN=()=>room.unit||'m';
+const cellU=()=>Math.max(.001,Number(room.cell_m)||1.5);
+const mapW=()=>Number(room.map_w)>0?Number(room.map_w):(Number(room.cols)||20)*cellU();
+const gcols=()=>Math.max(1,mapW()/cellU());
+const tokPct=t=>t.size_u>0?Math.max(.4,Math.min(100,t.size_u/mapW()*100)):(t.size||8);
+const fmt=n=>(+n).toLocaleString('pt-BR',{maximumFractionDigits:2});
+const isObj=t=>t.cat==='obj'||t.cat==='doc';
+const goodUrl=u=>{try{const x=new URL(String(u).trim());return(x.protocol==='https:'||x.protocol==='http:')?x.href:''}catch(e){return''}};
+const openLink=u=>{const g=goodUrl(u);g?window.open(g,'_blank','noopener,noreferrer'):toast('Link inválido')};
 const favs=()=>{try{return new Set(JSON.parse(LS('rpg_favs')||'[]'))}catch(e){return new Set()}};
 function toggleFav(id){const f=favs();f.has(id)?f.delete(id):f.add(id);LS('rpg_favs',JSON.stringify([...f]));renderLib()}
 const xFold=()=>{try{return JSON.parse(LS('rpg_fold_'+code)||'[]')}catch(e){return[]}};
@@ -625,7 +644,7 @@ const mapDb=q=>safe(()=>q).then(loadMaps);
 async function loadMaps(){if(!isGM||!code)return;const r=await sb.from('map_library').select().eq('room',code).order('created_at');if(!r.error){mapLib=r.data;renderLib()}}
 function libItems(){
   const A=toks.filter(t=>t.kind==='lib').map(t=>({id:t.id,tab:'tok',name:t.name||'Sem nome',folder:t.folder||'',t,
-    use:()=>safe(()=>T().insert({room:code,kind:'npc',x:50,y:50,name:t.name,emoji:t.emoji,color:t.color,size:t.size,img:t.img,hp:t.hp,hp_max:t.hp_max})),
+    use:()=>safe(()=>T().insert({room:code,kind:'npc',x:50,y:50,name:t.name,emoji:t.emoji,color:t.color,size:t.size,size_u:t.size_u,cat:t.cat,note:t.note,img:t.img,hp:t.hp,hp_max:t.hp_max})),
     edit:()=>openEd('lib',t.id),del:()=>safe(()=>T().delete().eq('id',t.id)),
     move:f=>safe(()=>T().update({folder:f||null}).eq('id',t.id))}));
   const B=mapLib.map(m=>({id:m.id,tab:'map',name:m.name,folder:m.folder||'',url:m.url,
@@ -747,13 +766,19 @@ function openEd(kind,id){
   $('f-name').value=t.name||'';$('f-emoji').value=t.emoji||'';
   $('f-color').value=t.color||(kind==='pl'?'#2e86de':'#c0392b');
   $('f-size').value=t.size||8;
+  $('f-unit').textContent=unitN();$('f-sizeu').value=t.size_u>0?+(+t.size_u).toFixed(3):+(((t.size||8)/100)*mapW()).toFixed(2);
+  $('f-cat').value=t.cat||'npc';$('f-cat').style.display=kind==='pl'?'none':'';$('f-note').value=t.note||'';$('f-sheet').value=t.sheet_url||'';
+  $('f-sheet').style.display=kind==='pl'?'':'none';syncCat();
   $('e-del').style.display=id?'':'none';
   $('e-lib').style.display=(isGM&&kind==='npc')?'':'none';
   $('f-hid').checked=!!t.hidden;$('f-hp').value=t.hp??'';$('f-hpm').value=t.hp_max??'';$('f-hl').style.display=(isGM&&kind==='npc')?'':'none';
   prev();$('ed').classList.add('on');
 }
+function syncCat(){const c=$('f-cat').value,o=c!=='npc'&&ed&&ed.kind!=='pl';$('f-note').style.display=o?'':'none';$('f-hp').parentElement.style.display=o?'none':''}
+$('f-cat').onchange=syncCat;
 function closeEd(){$('ed').classList.remove('on');ed=null}
-function fields(){return{name:$('f-name').value.trim()||'Sem nome',emoji:$('f-emoji').value.trim(),color:$('f-color').value,size:isGM?+$('f-size').value:Math.min(+$('f-size').value,12),img:pend,hidden:!!(isGM&&ed&&ed.kind==='npc'&&$('f-hid').checked),hp:$('f-hp').value===''?null:+$('f-hp').value,hp_max:$('f-hpm').value===''?null:+$('f-hpm').value}}
+function szU(){let v=+$('f-sizeu').value;if(!(v>0))return null;if(!isGM)v=Math.min(v,mapW()*.12);return +v.toFixed(3)}
+function fields(){return{name:$('f-name').value.trim()||'Sem nome',emoji:$('f-emoji').value.trim(),color:$('f-color').value,size:+$('f-size').value,size_u:szU(),cat:ed&&ed.kind==='pl'?null:($('f-cat').value==='npc'?null:$('f-cat').value),note:ed&&ed.kind!=='pl'&&$('f-cat').value!=='npc'?$('f-note').value.slice(0,4000):null,sheet_url:ed&&ed.kind==='pl'?(goodUrl($('f-sheet').value)||null):null,img:pend,hidden:!!(isGM&&ed&&ed.kind==='npc'&&$('f-hid').checked),hp:$('f-hp').value===''?null:+$('f-hp').value,hp_max:$('f-hpm').value===''?null:+$('f-hpm').value}}
 ['f-name','f-emoji','f-color'].forEach(i=>$(i).oninput=prev);
 $('f-noimg').onclick=()=>{pend='';prev()};
 $('f-file').onchange=async e=>{
@@ -763,6 +788,12 @@ $('f-file').onchange=async e=>{
   e.target.value='';
 };
 $('e-x').onclick=closeEd;
+let viewT=null;
+function openView(t){viewT=t;const v=$('view');$('v-ti').textContent=(t.cat==='doc'?'📄 ':'📦 ')+(t.name||'');$('v-tx').textContent=t.note||'(sem descrição)';
+  const im=$('v-im');im.style.display=t.img?'':'none';if(t.img)im.src=t.img;$('v-ed').style.display=isGM?'':'none';v.classList.add('on')}
+$('v-x').onclick=()=>$('view').classList.remove('on');
+$('v-ed').onclick=()=>{$('view').classList.remove('on');if(viewT)openEd('npc',viewT.id)};
+$('view').onclick=e=>{if(e.target.id==='view')$('view').classList.remove('on')};
 $('e-save').onclick=()=>{
   if(!ed)return;const {kind,id}=ed,f=fields();closeEd();
   safe(()=>id?T().update(f).eq('id',id):T().insert(Object.assign({room:code,kind,x:50,y:50,owner:kind==='pl'?uid:null},f)));
@@ -777,8 +808,10 @@ $('grid').onchange=e=>setRoom({grid:e.target.checked});
 $('closed').onchange=e=>setRoom({closed:e.target.checked});
 $('scale').onchange=e=>setRoom({scale:+e.target.value});
 $('ratio').onchange=e=>setRoom({ratio:e.target.value});
-$('cell').onchange=e=>setRoom({cell_m:+e.target.value||1.5});
-$('cols').onchange=e=>setRoom({cols:Math.max(5,Math.min(100,+e.target.value||20))});
+$('cell').onchange=e=>setRoom({cell_m:+e.target.value>0?+e.target.value:1.5});
+$('mapw').onchange=e=>{const v=+e.target.value;if(v>0)setRoom({map_w:v})};
+$('unit').onchange=e=>{let u=e.target.value;if(u==='__o'){u=(prompt('Nome da unidade (ex.: passos, léguas, casas):')||'').trim().slice(0,12);if(!u){applyRoom();return}}setRoom({unit:u})};
+
 $('zoom').oninput=render;
 addEventListener('resize',()=>render());
 $('file').onchange=async e=>{
@@ -801,6 +834,7 @@ function renderRoster(){
       c.onchange=()=>safe(()=>sb.from('members').update({[key]:c.checked}).eq('room',code).eq('uid',m.uid));
       w.className='pill';w.append(c,' '+lab);pm.appendChild(w);
     });
+    const pt=toks.find(t=>t.kind==='pl'&&t.owner===m.uid);if(pt&&pt.sheet_url){const fb=mk('button','p','📄 Abrir ficha');fb.onclick=()=>openLink(pt.sheet_url);d.appendChild(fb)}
     const kb=document.createElement('button');kb.textContent='Remover';kb.onclick=()=>{if(confirm('Remover '+(m.name||'jogador')+' da mesa?'))safe(async()=>{await sb.from('tokens').delete().eq('room',code).eq('owner',m.uid).eq('kind','pl');await sb.from('members').delete().eq('room',code).eq('uid',m.uid)})};d.appendChild(kb);
     l.appendChild(d);
   });
@@ -830,20 +864,20 @@ function renderCombat(){
   if(st==='active'&&cur){
     const actor=toks.find(t=>t.id===cur.token);
     if(actor&&canSeeRange(actor)){
-      const range=Math.max(.5,Math.min(100,Number($('attack-range').value)||1.5));
-      const cols=Math.max(1,Number(room.cols)||20);
+      const range=Math.max(.01,Math.min(100000,Number($('attack-range').value)||1.5));
+      const cols=gcols();
       const board=$('board'),cellPx=Math.max(1,board.clientWidth/cols);
       const gridCols=board.clientWidth/cellPx,gridRows=board.clientHeight/cellPx;
-      const enemies=toks.filter(t=>t.kind!=='lib'&&t.id!==actor.id&&(actor.kind==='pl'?t.kind==='npc':t.kind==='pl')&&!t.hidden&&(isGM||!isTokenMasked(t)));
+      const enemies=toks.filter(t=>t.kind!=='lib'&&!isObj(t)&&t.id!==actor.id&&(actor.kind==='pl'?t.kind==='npc':t.kind==='pl')&&!t.hidden&&(isGM||!isTokenMasked(t)));
       if(!enemies.length){status.textContent='Nenhum alvo visível para atacar.'}
       enemies.forEach(target=>{
         const dx=(Number(actor.x)-Number(target.x))/100*gridCols;
         const dy=(Number(actor.y)-Number(target.y))/100*gridRows;
         const dist=Math.hypot(dx,dy);
-        const canAttack=dist<=range+1e-6;
+        const du=dist*cellU(),canAttack=du<=range+1e-6;
         const item=document.createElement('div');item.className='attack-target '+(canAttack?'in-range':'out-range');
         const name=document.createElement('b');name.textContent=target.name||'Alvo';
-        const verdict=document.createElement('span');verdict.textContent=(canAttack?'✓ PODE ATACAR':'✕ FORA DO ALCANCE')+' · '+dist.toFixed(1)+' quadrados';
+        const verdict=document.createElement('span');verdict.textContent=(canAttack?'✓ PODE ATACAR':'✕ FORA DO ALCANCE')+' · '+fmt(du)+' '+unitN();
         item.append(name,verdict);status.appendChild(item);
       });
     }
@@ -870,7 +904,7 @@ async function saveInitiative(token, modifier){
   return data;
 }
 $('c-npc').onclick=()=>safe(async()=>{
-  const npcs=toks.filter(t=>t.kind==='npc'&&!t.hidden&&!ini.some(e=>e.token===t.id));
+  const npcs=toks.filter(t=>t.kind==='npc'&&!isObj(t)&&!t.hidden&&!ini.some(e=>e.token===t.id));
   if(!npcs.length){toast('Não há NPCs/monstros sem iniciativa');return}
   const modifier=Number($('imod').value)||0;
   const count=Math.max(1,Math.min(20,parseInt($('icount').value,10)||1));
@@ -894,8 +928,8 @@ function meas(q){
   const b=$('board'),W=b.clientWidth,H=b.clientHeight,l=$('rl');
   $('rsv').style.display='block';
   l.setAttribute('x1',rp[0]+'%');l.setAttribute('y1',rp[1]+'%');l.setAttribute('x2',q[0]+'%');l.setAttribute('y2',q[1]+'%');
-  const sq=Math.hypot((q[0]-rp[0])/100*W,(q[1]-rp[1])/100*H)/(W/(room.cols||20));
-  $('rd').style.display='block';$('rd').textContent='📏 '+sq.toFixed(1)+' quadrados · '+(sq*(room.cell_m||1.5)).toFixed(1)+' m';
+  const sq=Math.hypot((q[0]-rp[0])/100*W,(q[1]-rp[1])/100*H)/(W/gcols());
+  $('rd').style.display='block';$('rd').textContent='📏 '+fmt(sq*cellU())+' '+unitN()+' · '+fmt(sq)+' quadrados';
 }
 $('board').onpointerdown=e=>{if(pinging){const q=bp(e),c=(toks.find(t=>t.kind==='pl'&&t.owner===uid)||{}).color||'#ffd54a';showPing(q[0],q[1],c);ch&&ch.send({type:'broadcast',event:'ping',payload:{x:q[0],y:q[1],c}});setPing(false);return}if(!ruling)return;rp=bp(e);$('board').setPointerCapture(e.pointerId);meas(rp)};
 $('board').onpointermove=e=>{if(ruling&&rp)meas(bp(e))};
@@ -992,7 +1026,9 @@ function applyRoom(){
   $('rtitle').textContent='🎲 '+(room.name||room.id||'');
   $('mine').style.display=isGM?'none':'';$('dpj').style.display=isGM?'':'none';$('gmw').style.display=isGM?'':'none';$('cclr').style.display=isGM?'':'none';
   const S=(i,k,v)=>{const e=$(i);if(e!==document.activeElement)e[k]=v};
-  S('grid','checked',!!room.grid);S('scale','value',room.scale||100);S('ratio','value',room.ratio||'auto');S('cell','value',room.cell_m||1.5);S('cols','value',room.cols||20);S('closed','checked',!!room.closed);S('frozen','checked',!!room.frozen);S('muted','checked',!!room.muted);syncTabs();
+  S('grid','checked',!!room.grid);S('scale','value',room.scale||100);S('ratio','value',room.ratio||'auto');S('cell','value',room.cell_m||1.5);S('closed','checked',!!room.closed);S('frozen','checked',!!room.frozen);S('muted','checked',!!room.muted);
+  S('mapw','value',+mapW().toFixed(3));const un=unitN(),us=$('unit');if(![...us.options].some(o=>o.value===un||o.text===un)){const o=new Option(un,un);us.add(o,us.options[us.options.length-1])}S('unit','value',un);
+  ['unitl','au','f-unit'].forEach(i=>$(i).textContent=un);syncTabs();
 }
 function clrUnread(){unread=0;badge()}
 /* Recarrega só a tabela que mudou (mais leve e sem "voltar atrás" visual). */
@@ -1167,9 +1203,9 @@ $('adv').onclick=()=>adv(1);$('dis').onclick=()=>adv(-1);
 $('frozen').onchange=e=>setRoom({frozen:e.target.checked});
 $('muted').onchange=e=>setRoom({muted:e.target.checked});
 $('annb').onclick=()=>{const t=$('ann').value.trim();if(!t)return;$('ann').value='';toast('📢 '+t);ch&&ch.send({type:'broadcast',event:'ann',payload:{t}})};
-$('npc-show').onclick=()=>safe(()=>T().update({hidden:false}).eq('room',code).eq('kind','npc'));
-$('npc-hide').onclick=()=>safe(()=>T().update({hidden:true}).eq('room',code).eq('kind','npc'));
-$('npc-clr').onclick=()=>{if(confirm('Remover todos os NPCs do mapa?'))safe(()=>T().delete().eq('room',code).eq('kind','npc'))};
+$('npc-show').onclick=()=>safe(()=>T().update({hidden:false}).eq('room',code).eq('kind','npc').or('cat.is.null,cat.eq.npc'));
+$('npc-hide').onclick=()=>safe(()=>T().update({hidden:true}).eq('room',code).eq('kind','npc').or('cat.is.null,cat.eq.npc'));
+$('npc-clr').onclick=()=>{if(confirm('Remover todos os NPCs do mapa?'))safe(()=>T().delete().eq('room',code).eq('kind','npc').or('cat.is.null,cat.eq.npc'))};
 
 /* ---------- Abas animadas dos painéis ---------- */
 const TABS={dl:[['tools','🧰','Básico'],['mesa','🛠','Mesa'],['cena','🎨','Cenário'],['lib','📚','Biblioteca']],dr:[['combat','⚔️','Combate'],['players','👥','Jogadores'],['chat','💬','Chat']]};
