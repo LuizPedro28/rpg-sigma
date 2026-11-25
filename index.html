@@ -362,6 +362,13 @@ button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px soli
 #view h3{margin:0 0 10px}#view img{max-width:100%;max-height:40dvh;border-radius:12px;margin-bottom:10px}
 #view p{white-space:pre-wrap;line-height:1.5;margin:0 0 14px}
 #ed textarea{width:100%;resize:vertical;border-radius:10px;padding:8px}
+#sheetv{position:fixed;z-index:65;top:60px;right:12px;bottom:12px;width:min(540px,46vw);display:none;flex-direction:column;background:var(--camp-panel,#111b29);border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 60px #000a;overflow:hidden}
+#sheetv.on{display:flex;animation:paneIn .28s ease both}
+#sheetv.wide{left:12px;width:auto}
+.sh-h{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line)}.sh-h .sp{flex:1}.sh-h button{min-height:34px;min-width:34px;padding:2px 8px}
+#sh-n{font-size:.72rem;opacity:.7;padding:4px 12px}
+#sheetv iframe{flex:1;border:0;background:#fff;width:100%}
+@media(max-width:700px){#sheetv{inset:0;width:auto;border-radius:0}}
 /* ===== Menus em abas e sanfonas animadas ===== */
 .tabs{position:sticky;top:-8px;z-index:5;display:flex;gap:2px;padding:4px;margin:0 0 12px;background:rgba(0,0,0,.34);border:1px solid var(--line);border-radius:16px;backdrop-filter:blur(10px)}
 .tabs .ind{position:absolute;left:0;top:4px;bottom:4px;width:0;border-radius:12px;background:linear-gradient(135deg,var(--ac),var(--camp-ac2,var(--ac)));box-shadow:0 6px 18px color-mix(in srgb,var(--ac) 45%,transparent);transition:transform .4s cubic-bezier(.34,1.4,.5,1),width .3s ease;z-index:0}
@@ -480,6 +487,7 @@ button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px soli
   <label class="row">Tamanho da interface <input type="range" id="v-ui" min="0.8" max="1.4" step="0.05" value="1"></label>
   <label class="row">Arredondamento <input type="range" id="v-rad" min="0" max="20" step="1" value="10"></label>
   <button id="v-reset">Restaurar padrão</button></div>
+<div id="sheetv"><div class="sh-h"><b id="sh-t">📄 Ficha</b><span class="sp"></span><button id="sh-r" title="Recarregar">⟳</button><button id="sh-w" title="Expandir / reduzir">⤢</button><button id="sh-o" title="Abrir em nova aba">↗</button><button id="sh-x" title="Fechar">✕</button></div><div id="sh-n">Se a ficha não aparecer, o site dela pode bloquear exibição dentro de outros sites. Use ↗ para abrir em nova aba.</div><iframe id="sh-f" title="Ficha" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"></iframe></div>
 <div id="view"><div class="vb"><h3 id="v-ti"></h3><img id="v-im" alt=""><p id="v-tx"></p><div class="row"><button id="v-ed">✎ Editar</button><button class="p" id="v-x">Fechar</button></div></div></div>
 <div id="ed">
   <div class="row"><span class="mini" id="f-prev"></span><label class="btn">📷 Foto (PNG sem fundo)<input id="f-file" type="file" accept="image/*" hidden></label><button id="f-noimg">Sem foto</button><input type="text" id="f-name" placeholder="Nome" maxlength="20"><input type="text" id="f-emoji" placeholder="🙂" maxlength="4" style="width:4.5em"><input type="color" id="f-color"><select id="f-cat"><option value="npc">🧙 Personagem / NPC</option><option value="obj">📦 Objeto</option><option value="doc">📄 Documento</option></select><label>Tamanho <input type="number" id="f-sizeu" min="0.01" step="any" style="width:5.5em"> <b id="f-unit">m</b></label><input type="range" id="f-size" min="3" max="30" value="8" hidden><label>❤️ <input type="number" id="f-hp" min="0" placeholder="HP"> / <input type="number" id="f-hpm" min="0" placeholder="máx"></label><input type="text" id="f-sheet" placeholder="Link da ficha (Cris · Ordem Paranormal)" style="display:none;flex:1 1 100%"><textarea id="f-note" placeholder="Texto do documento / descrição do objeto (todos veem ao tocar)" rows="4" style="display:none;flex:1 1 100%"></textarea><label id="f-hl" style="display:none"><input type="checkbox" id="f-hid"> Oculto dos jogadores</label></div>
@@ -622,7 +630,7 @@ function render(){
   for(const id in els)if(!seen[id]){els[id].remove();delete els[id]}
   renderMapMasks();
   const mine=toks.find(t=>t.kind==='pl'&&t.owner===uid);
-  $('mine').textContent=mine?'Editar meu token':'Criar meu token';$('sheetb').style.display=(!isGM&&mine&&mine.sheet_url)?'':'none';$('sheetb').onclick=()=>mine&&openLink(mine.sheet_url);
+  $('mine').textContent=mine?'Editar meu token':'Criar meu token';$('sheetb').style.display=(!isGM&&mine&&mine.sheet_url)?'':'none';$('sheetb').onclick=()=>mine&&openSheet(mine.sheet_url,mine.name);
   if(!isGM&&!asked&&!mine&&!$('wait').style.display.startsWith('f')){asked=true;openEd('pl',null)}
 }
 const unitN=()=>room.unit||'m';
@@ -788,6 +796,15 @@ $('f-file').onchange=async e=>{
   e.target.value='';
 };
 $('e-x').onclick=closeEd;
+let shUrl='';
+function openSheet(url,name){const g=goodUrl(url);if(!g){toast('Link inválido');return}
+  if(shUrl!==g){shUrl=g;$('sh-f').src=g}
+  $('sh-t').textContent='📄 '+(name||'Ficha');$('sheetv').classList.add('on')}
+$('sh-x').onclick=()=>$('sheetv').classList.remove('on');
+$('sh-w').onclick=()=>$('sheetv').classList.toggle('wide');
+$('sh-o').onclick=()=>openLink(shUrl);
+$('sh-r').onclick=()=>{if(shUrl)$('sh-f').src=shUrl};
+addEventListener('keydown',e=>{if(e.key==='Escape')$('sheetv').classList.remove('on')});
 let viewT=null;
 function openView(t){viewT=t;const v=$('view');$('v-ti').textContent=(t.cat==='doc'?'📄 ':'📦 ')+(t.name||'');$('v-tx').textContent=t.note||'(sem descrição)';
   const im=$('v-im');im.style.display=t.img?'':'none';if(t.img)im.src=t.img;$('v-ed').style.display=isGM?'':'none';v.classList.add('on')}
@@ -834,7 +851,7 @@ function renderRoster(){
       c.onchange=()=>safe(()=>sb.from('members').update({[key]:c.checked}).eq('room',code).eq('uid',m.uid));
       w.className='pill';w.append(c,' '+lab);pm.appendChild(w);
     });
-    const pt=toks.find(t=>t.kind==='pl'&&t.owner===m.uid);if(pt&&pt.sheet_url){const fb=mk('button','p','📄 Abrir ficha');fb.onclick=()=>openLink(pt.sheet_url);d.appendChild(fb)}
+    const pt=toks.find(t=>t.kind==='pl'&&t.owner===m.uid);if(pt&&pt.sheet_url){const fb=mk('button','p','📄 Abrir ficha');fb.onclick=()=>openSheet(pt.sheet_url,pt.name);d.appendChild(fb)}
     const kb=document.createElement('button');kb.textContent='Remover';kb.onclick=()=>{if(confirm('Remover '+(m.name||'jogador')+' da mesa?'))safe(async()=>{await sb.from('tokens').delete().eq('room',code).eq('owner',m.uid).eq('kind','pl');await sb.from('members').delete().eq('room',code).eq('uid',m.uid)})};d.appendChild(kb);
     l.appendChild(d);
   });
@@ -1087,7 +1104,7 @@ async function start(c){
 function leave(){
   if(ch){sb.removeChannel(ch);ch=null}
   clearInterval(poll);code=null;LS('rpg_code','');
-  room={};toks=[];msgs=[];members=[];ini=[];masks=[];mapLib=[];asked=false;lastUrl=null;window._ls=undefined;setMaskMode(false);
+  room={};toks=[];msgs=[];members=[];ini=[];masks=[];mapLib=[];$('sheetv').classList.remove('on');$('sh-f').src='about:blank';shUrl='';asked=false;lastUrl=null;window._ls=undefined;setMaskMode(false);
   for(const id in els)els[id].remove();els={};
   closeEd();$('stage').style.display='none';$('lobby').style.display='';
   ['inv','home','br','bl','srv'].forEach(i=>$(i).style.display='none');$('nav').style.display='none';
